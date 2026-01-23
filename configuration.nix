@@ -27,7 +27,7 @@
     gh
     ddate
     testdisk
-    vi
+    vim
     nano
   ];
 
