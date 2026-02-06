@@ -12,11 +12,11 @@
 } @ args:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      <nixos-hardware/apple/macbook-pro/14-1>
-    ];
+#  imports =
+#    [ # Include the results of the hardware scan.
+#      ./hardware-configuration.nix
+#      <nixos-hardware/apple/macbook-pro/14-1>
+#    ];
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
