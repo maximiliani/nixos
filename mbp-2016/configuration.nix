@@ -99,8 +99,11 @@
     packages = with pkgs; [
     #  thunderbird
 	signal-desktop
-	jetbrains-webstorm
-	jetbrains-idea
+	keepassxc
+	podman
+	podman-desktop
+	jetbrains.webstorm
+	jetbrains.idea
     ];
   };
 
@@ -159,4 +162,10 @@
     };
 
   nix.registry.nixpkgs.flake = inputs.nixpkgs;
+
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 30d";
+  };
 }
