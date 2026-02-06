@@ -92,6 +92,8 @@
     packages = with pkgs; [
     #  thunderbird
 	signal-desktop
+	jetbrains-webstorm
+	jetbrains-idea
     ];
   };
 
@@ -106,7 +108,17 @@
   environment.systemPackages = with pkgs; [
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
+    git
+    gh
   ];
+
+  # Enable the OpenSSH daemon to use a YubiKey for SSH authentication.
+  services.udev.packages = [ pkgs.yubikey-personalization ];
+
+  programs.gnupg.agent = {
+    enable = true;
+    enableSSHSupport = true;
+  };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
