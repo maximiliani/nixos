@@ -1,9 +1,8 @@
-{
-  config,
-  osConfig,
-  pkgs,
-  lib,
-  ...
+{ config
+, osConfig
+, pkgs
+, lib
+, ...
 }:
 let
   full = osConfig.local.full;

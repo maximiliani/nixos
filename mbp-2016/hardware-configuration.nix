@@ -5,7 +5,8 @@
 
 {
   imports =
-    [ (modulesPath + "/hardware/network/broadcom-43xx.nix")
+    [
+      (modulesPath + "/hardware/network/broadcom-43xx.nix")
       (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
@@ -20,14 +21,16 @@
   };
 
   fileSystems."/" =
-    { device = "/dev/mapper/luks-d8ee6f8b-f5f6-469f-9ada-83940c0f076d";
+    {
+      device = "/dev/mapper/luks-d8ee6f8b-f5f6-469f-9ada-83940c0f076d";
       fsType = "ext4";
     };
 
   boot.initrd.luks.devices."luks-d8ee6f8b-f5f6-469f-9ada-83940c0f076d".device = "/dev/disk/by-uuid/d8ee6f8b-f5f6-469f-9ada-83940c0f076d";
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/5F66-17ED";
+    {
+      device = "/dev/disk/by-uuid/5F66-17ED";
       fsType = "vfat";
       options = [ "fmask=0077" "dmask=0077" ];
     };
