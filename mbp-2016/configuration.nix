@@ -190,13 +190,13 @@
 
     programs.gnupg.agent = {
       enable = true;
-#      enableSSHSupport = true;
+      enableSSHSupport = true;
     };
     hardware.gpgSmartcards.enable = true;
 
     # List services that you want to enable:
 
     # Enable the OpenSSH daemon.
-    services.openssh.enable = true;
-    programs.ssh.startAgent = true;
+#    services.openssh.enable = true;
+#    programs.ssh.startAgent = true;
 }
