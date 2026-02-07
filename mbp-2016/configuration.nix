@@ -127,6 +127,9 @@
   environment.systemPackages = with pkgs; [
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
+    curl
+    vim
+    nano
     git
     gh
     gnupg
@@ -165,14 +168,6 @@
 
     users.defaultUserShell = pkgs.zsh;
     environment.shells = with pkgs; [ zsh ];
-
-    environment.systemPackages = with pkgs; [
-      curl
-      git
-      gh
-      vim
-      nano
-    ];
 
     # Set your time zone.
     time.timeZone = "Europe/Berlin";
