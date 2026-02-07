@@ -162,25 +162,9 @@
     programs.zsh = {
       enable = true;
 
-#      ohMyZsh = {
-#        enable = true;
-#        customPkgs = with pkgs; [
-#          omz-nix-shell
-#          omz-powerlevel10k
-#          zsh-you-should-use
-#        ];
-#        plugins = [
-#          "git"
-#          "sudo"
-#          "nix-shell"
-#          "you-should-use"
-#        ];
-#        theme = "powerlevel10k/powerlevel10k";
-#      };
       shellAliases = {
         ll = "ls -l";
         update = "sudo nixos-rebuild switch";
-        update-server = "nixos-rebuild switch --flake ${config.system.autoUpgrade.flake} --refresh";
         upgrade = "nix flake update --commit-lock-file --flake /etc/nixos";
         nixos = "cd /etc/nixos";
         vi = "nvim ";
