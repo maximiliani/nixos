@@ -1,6 +1,0 @@
-{ ... }:
-{
-  imports = [
-    ./auto-upgrade.nix
-  ];
-}
