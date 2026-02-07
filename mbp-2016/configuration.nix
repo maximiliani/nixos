@@ -18,12 +18,12 @@
 #      <nixos-hardware/apple/macbook-pro/14-1>
 #    ];
 
-  # Bootloader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-
-  # Use latest kernel.
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+#  # Bootloader.
+#  boot.loader.systemd-boot.enable = true;
+#  boot.loader.efi.canTouchEfiVariables = true;
+#
+#  # Use latest kernel.
+#  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   networking.hostName = "mbp-2016"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
