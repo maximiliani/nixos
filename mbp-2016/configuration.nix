@@ -94,30 +94,6 @@
 
   # Install firefox.
   programs.firefox.enable = true;
-  programs.firefox.defaultBrowser = true;
-  programs.firefox.extraPackages = with pkgs; [
-     firefox-extensions.https-everywhere
-     firefox-extensions.privacy-badger
-     firefox-extensions.ublock-origin
-  ];
-  programs.firefox.profiles = {
-    "default" = {
-      extensions = with pkgs.firefox-extensions; [
-        https-everywhere
-        privacy-badger
-        ublock-origin
-      ];
-    };
-  };
-  programs.firefox.settings = {
-    "browser.startup.homepage" = "https://www.mozilla.org";
-    "browser.startup.page" = 1;
-    "browser.startup.firstrunSkipsHomepage" = false;
-    "browser.startup.homepage_override.mstone" = "ignore";
-  };
-  programs.firefox.enableGnomeIntegration = true;
-  programs.geary.enable = false;
-  programs.web.browser.enable = false;
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
