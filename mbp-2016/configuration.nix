@@ -25,6 +25,26 @@
   services.xserver.displayManager.gdm.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
 
+  # Select internationalisation properties.
+  i18n.defaultLocale = lib.mkDefault "en_US.UTF-8";
+  i18n.supportedLocales = [
+    "de_DE.UTF-8/UTF-8"
+    "en_US.UTF-8/UTF-8"
+  ];
+
+  i18n.extraLocaleSettings = {
+    LANGUAGE = lib.mkDefault "de_DE";
+    LC_ADDRESS = "de_DE.UTF-8";
+    LC_IDENTIFICATION = "de_DE.UTF-8";
+    LC_MEASUREMENT = "de_DE.UTF-8";
+    LC_MONETARY = "de_DE.UTF-8";
+    LC_NAME = "de_DE.UTF-8";
+    LC_NUMERIC = "de_DE.UTF-8";
+    LC_PAPER = "de_DE.UTF-8";
+    LC_TELEPHONE = "de_DE.UTF-8";
+    LC_TIME = "de_DE.UTF-8";
+  };
+
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "de";
@@ -140,4 +160,78 @@
     dates = "weekly";
     options = "--delete-older-than 30d";
   };
+
+   security.sudo.extraConfig = "Defaults env_keep += SSH_AUTH_SOCK";
+
+    users.defaultUserShell = pkgs.zsh;
+    environment.shells = with pkgs; [ zsh ];
+
+    environment.systemPackages = with pkgs; [
+      curl
+      git
+      gh
+      vim
+      nano
+    ];
+
+    # Set your time zone.
+    time.timeZone = "Europe/Berlin";
+
+    security.pam.sshAgentAuth.enable = true;
+
+    fonts = {
+      enableDefaultPackages = true;
+
+      packages = with pkgs; [
+        meslo-lgs-nf
+      ];
+
+      fontconfig.defaultFonts = {
+        serif = [ "MesloLGS NF Regular" ];
+        sansSerif = [ "MesloLGS NF Regular" ];
+        monospace = [ "MesloLGS NF Monospace" ];
+      };
+    };
+
+    programs.zsh = {
+      enable = true;
+
+      #      oh-my-zsh = {
+      ohMyZsh = {
+        enable = true;
+        customPkgs = with pkgs; [
+          omz-nix-shell
+          omz-powerlevel10k
+          zsh-you-should-use
+        ];
+        plugins = [
+          "git"
+          "sudo"
+          "nix-shell"
+          "you-should-use"
+        ];
+        theme = "powerlevel10k/powerlevel10k";
+      };
+      shellAliases = {
+        ll = "ls -l";
+        update = "sudo nixos-rebuild switch";
+        update-server = "nixos-rebuild switch --flake ${config.system.autoUpgrade.flake} --refresh";
+        upgrade = "nix flake update --commit-lock-file --flake /etc/nixos";
+        nixos = "cd /etc/nixos";
+        vi = "nvim ";
+        sudo = "sudo "; # This allows aliases to work with sudo
+      };
+    };
+
+    programs.gnupg.agent = {
+      enable = true;
+      #   enableSSHSupport = true;
+    };
+    hardware.gpgSmartcards.enable = true;
+
+    # List services that you want to enable:
+
+    # Enable the OpenSSH daemon.
+    services.openssh.enable = true;
+    programs.ssh.startAgent = true;
 }
