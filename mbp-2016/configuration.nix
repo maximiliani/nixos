@@ -2,35 +2,36 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ modulesPath
-, lib
-, pkgs
-, config
-, inputs
-, ...
+{
+  modulesPath,
+  lib,
+  pkgs,
+  config,
+  inputs,
+  ...
 } @ args:
 
 {
-  #  imports =
-  #    [ # Include the results of the hardware scan.
-  #      ./hardware-configuration.nix
-  #      <nixos-hardware/apple/macbook-pro/14-1>
-  #    ];
+#  imports =
+#    [ # Include the results of the hardware scan.
+#      ./hardware-configuration.nix
+#      <nixos-hardware/apple/macbook-pro/14-1>
+#    ];
 
-  #  # Bootloader.
-  #  boot.loader.systemd-boot.enable = true;
-  #  boot.loader.efi.canTouchEfiVariables = true;
-  #
-  #  # Use latest kernel.
-  #  boot.kernelPackages = pkgs.linuxPackages_latest;
+#  # Bootloader.
+#  boot.loader.systemd-boot.enable = true;
+#  boot.loader.efi.canTouchEfiVariables = true;
+#
+#  # Use latest kernel.
+#  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   networking.hostName = "mbp-2016"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
-  myModules.autoUpgrade = {
-    enable = true;
-    delayForInternet = true;
-  };
+#  myModules.autoUpgrade = { TODO
+#      enable = true;
+#      delayForInternet = true;
+#    };
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
@@ -39,23 +40,23 @@
   # Enable networking
   networking.networkmanager.enable = true;
 
-  #  # Set your time zone.
-  #  time.timeZone = "Europe/Berlin";
+#  # Set your time zone.
+#  time.timeZone = "Europe/Berlin";
 
-  #  # Select internationalisation properties.
-  #  i18n.defaultLocale = "en_US.UTF-8";
-  #
-  #  i18n.extraLocaleSettings = {
-  #    LC_ADDRESS = "de_DE.UTF-8";
-  #    LC_IDENTIFICATION = "de_DE.UTF-8";
-  #    LC_MEASUREMENT = "de_DE.UTF-8";
-  #    LC_MONETARY = "de_DE.UTF-8";
-  #    LC_NAME = "de_DE.UTF-8";
-  #    LC_NUMERIC = "de_DE.UTF-8";
-  #    LC_PAPER = "de_DE.UTF-8";
-  #    LC_TELEPHONE = "de_DE.UTF-8";
-  #    LC_TIME = "de_DE.UTF-8";
-  #  };
+#  # Select internationalisation properties.
+#  i18n.defaultLocale = "en_US.UTF-8";
+#
+#  i18n.extraLocaleSettings = {
+#    LC_ADDRESS = "de_DE.UTF-8";
+#    LC_IDENTIFICATION = "de_DE.UTF-8";
+#    LC_MEASUREMENT = "de_DE.UTF-8";
+#    LC_MONETARY = "de_DE.UTF-8";
+#    LC_NAME = "de_DE.UTF-8";
+#    LC_NUMERIC = "de_DE.UTF-8";
+#    LC_PAPER = "de_DE.UTF-8";
+#    LC_TELEPHONE = "de_DE.UTF-8";
+#    LC_TIME = "de_DE.UTF-8";
+#  };
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;
@@ -101,13 +102,13 @@
     description = "Maximilian Inckmann";
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
-      #  thunderbird
-      signal-desktop
-      keepassxc
-      podman
-      podman-desktop
-      jetbrains.webstorm
-      jetbrains.idea
+    #  thunderbird
+	signal-desktop
+	keepassxc
+	podman
+	podman-desktop
+	jetbrains.webstorm
+	jetbrains.idea
     ];
   };
 
@@ -120,7 +121,7 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+  #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
     git
     gh
@@ -164,8 +165,8 @@
   system.stateVersion = "25.11"; # Did you read the comment?
 
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
-  };
+      experimental-features = [ "nix-command" "flakes" ];
+    };
 
   nix.registry.nixpkgs.flake = inputs.nixpkgs;
 
