@@ -36,9 +36,6 @@
              disko.nixosModules.disko
              ./servers/vps2.de-berlin.net.inckmann.de/configuration.nix
              ./servers/vps2.de-berlin.net.inckmann.de/hardware-configuration.nix
-             ./generic/default.nix
-             ./generic/localization.nix
-             ./generic/neovim.nix
            ];
          };
 
@@ -51,9 +48,6 @@
              nixos-hardware.nixosModules.apple-macbook-pro-14-1
              ./mbp-2016/configuration.nix
              ./mbp-2016/hardware-configuration.nix
-             ./generic/default.nix
-             ./generic/localization.nix
-             ./generic/neovim.nix
            ];
          };
        };

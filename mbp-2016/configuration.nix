@@ -74,7 +74,7 @@
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
-  #services.libinput.enable = true;
+  services.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.maximiliani = {
@@ -139,11 +139,6 @@
   # Enable the OpenSSH daemon to use a YubiKey for SSH authentication.
   services.udev.packages = [ pkgs.yubikey-personalization ];
 
-  programs.gnupg.agent = {
-    enable = true;
-    enableSSHSupport = true;
-  };
-
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave
@@ -191,7 +186,6 @@
     programs.zsh = {
       enable = true;
 
-      #      oh-my-zsh = {
       ohMyZsh = {
         enable = true;
         customPkgs = with pkgs; [
@@ -220,7 +214,7 @@
 
     programs.gnupg.agent = {
       enable = true;
-      #   enableSSHSupport = true;
+      enableSSHSupport = true;
     };
     hardware.gpgSmartcards.enable = true;
 
