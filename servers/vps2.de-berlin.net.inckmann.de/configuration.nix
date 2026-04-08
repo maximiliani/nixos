@@ -2,6 +2,7 @@
 , lib
 , pkgs
 , inputs
+, self
 , ...
 } @ args:
 {
