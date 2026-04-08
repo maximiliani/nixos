@@ -19,6 +19,7 @@ outputs = {self, nixpkgs, ...}@inputs: {
 		modules = [
 			./configuration.nix
     			./nix-config.nix
+			inputs.sops-nix.nixosModules.sops
 		];
 	};
 };

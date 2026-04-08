@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ config, pkgs, self, ... }:
 
 {
   imports =
@@ -118,6 +118,18 @@
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
+
+  # Sops
+  sops = {
+    defaultSopsFile = self + /secrets/t420/default.yaml;
+    age = {
+     keyFile = "/var/lib/sops-nix/key.txt";
+     generateKey = true;
+    };
+    secrets = {
+      hello = { };
+    };
+  };
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];

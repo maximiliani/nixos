@@ -1,0 +1,14 @@
+keys:
+  - &admin B054287D42FC91AD36137D9F03ECA132FD38CD59
+  - &t420 age1zlmedva0jsdys79d39qgy595clx5zemjzl2w0qpgewq2psj5yggswgltf2
+creation_rules:
+  - path_regex: ^secrets/t420/.*$
+    key_groups:
+      - pgp:
+          - *admin
+        age:
+          - *t420
+  - path_regex: ^secrets/
+    key_groups:
+      - pgp:
+          - *admin
