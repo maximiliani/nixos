@@ -40,6 +40,17 @@
 
   system.stateVersion = "25.11";
 
+  # Sops
+  sops = {
+    defaultSopsFile = self + /secrets/vps2-de-berlin/default.yaml;
+    age = {
+     keyFile = "/var/lib/sops-nix/key.txt";
+     generateKey = true;
+    };
+    secrets = {
+      hello = { };
+    };
+  };
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
   };

@@ -22,6 +22,7 @@ outputs = {self, nixpkgs, ...}@inputs: {
 			inherit inputs self;
 		};
 		modules = [
+		  inputs.sops-nix.nixosModules.sops
 		  inputs.disko.nixosModules.disko
 		  ./servers/vps2.de-berlin.net.inckmann.de/configuration.nix
 		  ./servers/vps2.de-berlin.net.inckmann.de/hardware-configuration.nix
