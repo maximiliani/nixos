@@ -33,7 +33,7 @@ outputs = {self, nixpkgs, ...}@inputs: {
         };
         modules = [
           { nixpkgs.config.allowUnfree = true; }
-          ./configuration.nix
+          ./t420/configuration.nix
           ./nix-config.nix
           inputs.sops-nix.nixosModules.sops
         ];
