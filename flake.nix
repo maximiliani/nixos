@@ -13,52 +13,45 @@ inputs = {
 outputs = {self, nixpkgs, ...}@inputs: {
    nixosConfigurations = {
       vps2-de-berlin = nixpkgs.lib.nixosSystem rec {
-         pkgs = import nixpkgs {
-            inherit system;
-            config.allowUnfree = true;
-         };
          system = "x86_64-linux";
          specialArgs = {
             inherit inputs self;
          };
          modules = [
+           { nixpkgs.config.allowUnfree = true; }
            inputs.sops-nix.nixosModules.sops
            inputs.disko.nixosModules.disko
            ./servers/vps2.de-berlin.net.inckmann.de/configuration.nix
            ./servers/vps2.de-berlin.net.inckmann.de/hardware-configuration.nix
          ];
       };
+
       t420 = nixpkgs.lib.nixosSystem rec {
-        pkgs = import nixpkgs {
-            inherit system;
-            config.allowUnfree = true;
-        };
         system = "x86_64-linux";
         specialArgs = {
             inherit inputs self;
         };
         modules = [
-            ./configuration.nix
-            ./nix-config.nix
-            inputs.sops-nix.nixosModules.sops
+          { nixpkgs.config.allowUnfree = true; }
+          ./configuration.nix
+          ./nix-config.nix
+          inputs.sops-nix.nixosModules.sops
         ];
       };
+
       mbp-2016 = nixpkgs.lib.nixosSystem rec {
-        pkgs = import nixpkgs {
-            inherit system;
-            config.allowUnfree = true;
-        };
         system = "x86_64-linux";
         specialArgs = {
             inherit inputs self;
         };
         modules = [
-            ./nix-config.nix
-            ./mbp-2016/configuration.nix
-            ./mbp-2016/hardware-configuration.nix
-            inputs.sops-nix.nixosModules.sops
+          { nixpkgs.config.allowUnfree = true; }
+          ./nix-config.nix
+          ./mbp-2016/configuration.nix
+          ./mbp-2016/hardware-configuration.nix
+          inputs.sops-nix.nixosModules.sops
         ];
       };
-    };
+   };
 };
 }
