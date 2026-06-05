@@ -2,8 +2,8 @@
 # and may be overwritten by future invocations.  Please make changes
 # to /etc/nixos/configuration.nix instead.
 { config, lib, pkgs, modulesPath, ... }:
-
-{
+let mbp-touchbar = config.boot.kernelPackages.callPackage ./touchbar.nix { };
+in {
   imports =
     [
       (modulesPath + "/hardware/network/broadcom-43xx.nix")
@@ -13,9 +13,9 @@
   boot = {
     kernelPackages = pkgs.linuxPackages_latest;
     initrd.availableKernelModules = [ "xhci_pci" "nvme" "usbhid" "usb_storage" "sd_mod" ];
-    initrd.kernelModules = [ ];
-    kernelModules = [ "kvm-intel" ];
-    extraModulePackages = [ ];
+    initrd.kernelModules = [ "kvm-intel" "applesmc" "hid-apple" "hid-appletb-kbd" "hid-appletb-bl" "intel_lpss_pci" "spi_pxa2xx_platform" "applespi" ];
+    kernelModules = [ "kvm-intel" "applesmc" "hid-apple" "hid-appletb-kbd" "hid-appletb-bl" "intel_lpss_pci" "spi_pxa2xx_platform" "applespi" ];
+    extraModulePackages = [ mbp-touchbar ];
     loader.systemd-boot.enable = true;
     loader.efi.canTouchEfiVariables = true;
   };
