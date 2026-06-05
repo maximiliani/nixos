@@ -18,6 +18,32 @@ in {
     extraModulePackages = [ mbp-touchbar ];
     loader.systemd-boot.enable = true;
     loader.efi.canTouchEfiVariables = true;
+    kernelParams = [ "mem_sleep_default=s2idle" ];
+  };
+
+  # Lid switch configuration
+  services.logind = {
+    lidSwitch = "suspend";
+    lidSwitchExternalPower = "suspend";
+    lidSwitchDocked = "ignore";
+  };
+  systemd.services.enable-macbook-wakeup = {
+    description = "Enable wake sources for MacBook lid open";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "multi-user.target" ];
+
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+
+    script = ''
+      for device in LID0 XHC1 XHC2 RP01 RP05; do
+        if grep -q "^$device.*disabled" /proc/acpi/wakeup; then
+          echo "$device" > /proc/acpi/wakeup
+        fi
+      done
+    '';
   };
 
   fileSystems."/" =

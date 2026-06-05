@@ -25,6 +25,9 @@
   services.xserver.displayManager.gdm.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
 
+  # Set your time zone.
+  time.timeZone = "Europe/Berlin";
+
   # Select internationalisation properties.
   i18n.defaultLocale = lib.mkDefault "en_US.UTF-8";
   i18n.supportedLocales = [
@@ -82,26 +85,21 @@
     description = "Maximilian Inckmann";
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
-    #  thunderbird
-	signal-desktop
-	keepassxc
-	podman
-	podman-desktop
-	jetbrains.webstorm
-	jetbrains.idea
+	  signal-desktop
+	  keepassxc
+	  podman
+	  podman-desktop
+	  jetbrains.webstorm
+	  jetbrains.idea
     ];
   };
 
   # Install firefox.
   programs.firefox.enable = true;
 
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
-
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-  #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
     curl
     vim
@@ -112,8 +110,6 @@
     yubikey-personalization
   ];
 
-  # Enable the OpenSSH daemon to use a YubiKey for SSH authentication.
-  services.udev.packages = [ pkgs.yubikey-personalization ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
@@ -126,56 +122,50 @@
   nix.settings = {
       experimental-features = [ "nix-command" "flakes" ];
     };
-
   nix.registry.nixpkgs.flake = inputs.nixpkgs;
-
   nix.gc = {
     automatic = true;
     dates = "weekly";
-    options = "--delete-older-than 30d";
+    options = "--delete-older-than 14d";
   };
 
-   security.sudo.extraConfig = "Defaults env_keep += SSH_AUTH_SOCK";
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
 
-    users.defaultUserShell = pkgs.zsh;
-    environment.shells = with pkgs; [ zsh ];
+  fonts = {
+    enableDefaultPackages = true;
 
-    # Set your time zone.
-    time.timeZone = "Europe/Berlin";
+    packages = with pkgs; [
+      meslo-lgs-nf
+    ];
 
-    security.pam.sshAgentAuth.enable = true;
-
-    fonts = {
-      enableDefaultPackages = true;
-
-      packages = with pkgs; [
-        meslo-lgs-nf
-      ];
-
-      fontconfig.defaultFonts = {
-        serif = [ "MesloLGS NF Regular" ];
-        sansSerif = [ "MesloLGS NF Regular" ];
-        monospace = [ "MesloLGS NF Monospace" ];
-      };
+    fontconfig.defaultFonts = {
+      serif = [ "MesloLGS NF Regular" ];
+      sansSerif = [ "MesloLGS NF Regular" ];
+      monospace = [ "MesloLGS NF Monospace" ];
     };
+  };
 
-    programs.zsh = {
-      enable = true;
-
-      shellAliases = {
-        ll = "ls -l";
-        update = "sudo nixos-rebuild switch";
-        upgrade = "nix flake update --commit-lock-file --flake /etc/nixos";
-        nixos = "cd /etc/nixos";
-        vi = "nvim ";
-        sudo = "sudo "; # This allows aliases to work with sudo
-      };
+  users.defaultUserShell = pkgs.zsh;
+  environment.shells = with pkgs; [ zsh ];
+  programs.zsh = {
+    enable = true;
+    shellAliases = {
+      ll = "ls -l";
+      update = "sudo nixos-rebuild switch";
+      upgrade = "nix flake update --commit-lock-file --flake /etc/nixos";
+      nixos = "cd /etc/nixos";
+      vi = "nvim ";
+      sudo = "sudo "; # This allows aliases to work with sudo
     };
+  };
 
-    programs.gnupg.agent = {
-      enable = true;
-      enableSSHSupport = true;
-    };
-    hardware.gpgSmartcards.enable = true;
-
+  programs.gnupg.agent = {
+    enable = true;
+    enableSSHSupport = true;
+  };
+  hardware.gpgSmartcards.enable = true;
+  security.pam.sshAgentAuth.enable = true;
+  security.sudo.extraConfig = "Defaults env_keep += SSH_AUTH_SOCK";
+  services.udev.packages = [ pkgs.yubikey-personalization ];  # Enable the OpenSSH daemon to use a YubiKey for SSH authentication.
 }
