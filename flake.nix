@@ -30,16 +30,16 @@ outputs = {self, nixpkgs, ...}@inputs: {
       };
       t420 = nixpkgs.lib.nixosSystem rec {
         pkgs = import nixpkgs {
-                inherit system;
-                config.allowUnfree = true;
-            };
+            inherit system;
+            config.allowUnfree = true;
+        };
         system = "x86_64-linux";
         specialArgs = {
             inherit inputs self;
         };
         modules = [
             ./configuration.nix
-                ./nix-config.nix
+            ./nix-config.nix
             inputs.sops-nix.nixosModules.sops
         ];
       };
@@ -53,6 +53,7 @@ outputs = {self, nixpkgs, ...}@inputs: {
             inherit inputs self;
         };
         modules = [
+            ./nix-config.nix
             ./mbp-2016/configuration.nix
             ./mbp-2016/hardware-configuration.nix
             inputs.sops-nix.nixosModules.sops
