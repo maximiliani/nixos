@@ -8,7 +8,7 @@ stdenv.mkDerivation rec {
     owner = "Heratiki";
     repo = "macbook12-spi-driver";
     rev = "1d5cd6f82c2f9ee6e2431ac51237c2a82c397b77";
-    hash = "sha256-hkPfoX1PLNCNU2YoxbX7vvbOP6nwDXL8QyusYMaitf0=";
+    hash = "sha256-hkPfoX1PLNCNu2YoxbX7vvbOP6nwDXL8QyusYMaitf0=";
   };
 
   hardeningDisable = [ "pic" "format" ];
