@@ -18,7 +18,7 @@ in {
     extraModulePackages = [ mbp-touchbar ];
     loader.systemd-boot.enable = true;
     loader.efi.canTouchEfiVariables = true;
-    kernelParams = [ "mem_sleep_default=s2idle" ];
+    kernelParams = [ "i915.enable_psr=0" ];
   };
 
   # Lid switch configuration
@@ -38,11 +38,21 @@ in {
     };
 
     script = ''
-      for device in LID0 XHC1 XHC2 RP01 RP05; do
-        if grep -q "^$device.*disabled" /proc/acpi/wakeup; then
-          echo "$device" > /proc/acpi/wakeup
-        fi
-      done
+      if grep -q '^LID0[[:space:]].*disabled' /proc/acpi/wakeup; then
+        echo LID0 > /proc/acpi/wakeup
+      fi
+    '';
+  };
+  systemd.services.fix-applespi-resume = {
+    description = "Re-initialize Apple SPI input devices after resume";
+    wantedBy = [ "post-resume.target" ];
+    after = [ "post-resume.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+    };
+    script = ''
+      ${pkgs.kmod}/bin/modprobe -r applespi || true
+      ${pkgs.kmod}/bin/modprobe applespi || true
     '';
   };
 

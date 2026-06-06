@@ -168,4 +168,16 @@
   security.pam.sshAgentAuth.enable = true;
   security.sudo.extraConfig = "Defaults env_keep += SSH_AUTH_SOCK";
   services.udev.packages = [ pkgs.yubikey-personalization ];  # Enable the OpenSSH daemon to use a YubiKey for SSH authentication.
+
+   # Sops
+  sops = {
+    defaultSopsFile = self + /secrets/vps2-de-berlin/default.yaml;
+    age = {
+     keyFile = "/var/lib/sops-nix/key.txt";
+     generateKey = true;
+    };
+    secrets = {
+      hello = { };
+    };
+  };
 }
