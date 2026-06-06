@@ -22,10 +22,10 @@ in {
   };
 
   # Lid switch configuration
-  services.logind = {
-    lidSwitch = "suspend";
-    lidSwitchExternalPower = "suspend";
-    lidSwitchDocked = "ignore";
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend";
+    HandleLidSwitchExternalPower = "suspend";
+    HandleLidSwitchDocked = "ignore";
   };
   systemd.services.enable-macbook-wakeup = {
     description = "Enable wake sources for MacBook lid open";
