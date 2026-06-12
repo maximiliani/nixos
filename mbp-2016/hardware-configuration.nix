@@ -8,24 +8,53 @@ in {
     [
       (modulesPath + "/hardware/network/broadcom-43xx.nix")
       (modulesPath + "/installer/scan/not-detected.nix")
+      (modulesPath + "/hardware/apple-touchbar.nix")
     ];
 
   boot = {
     kernelPackages = pkgs.linuxPackages_latest;
     initrd.availableKernelModules = [ "xhci_pci" "nvme" "usbhid" "usb_storage" "sd_mod" ];
-    initrd.kernelModules = [ "kvm-intel" "applesmc" "hid-apple" "hid-appletb-kbd" "hid-appletb-bl" "intel_lpss_pci" "spi_pxa2xx_platform" "applespi" ];
-    kernelModules = [ "kvm-intel" "applesmc" "hid-apple" "hid-appletb-kbd" "hid-appletb-bl" "intel_lpss_pci" "spi_pxa2xx_platform" "applespi" ];
+    initrd.kernelModules = [ "kvm-intel" "applesmc" "hid-apple" "hid-appletb-kbd" "hid-appletb-bl" "appletbdrm"  "intel_lpss_pci" "spi_pxa2xx_platform" "applespi" ];
+    kernelModules = [ "kvm-intel" "applesmc" "hid-apple" "hid-appletb-kbd" "hid-appletb-bl" "appletbdrm" "intel_lpss_pci" "spi_pxa2xx_platform" "applespi" ];
     extraModulePackages = [ mbp-touchbar ];
     loader.systemd-boot.enable = true;
     loader.efi.canTouchEfiVariables = true;
-    kernelParams = [ "i915.enable_psr=0" ];
+    kernelParams = [ "i915.enable_psr=0" "intel_iommu=on" ];
   };
+
+  hardware.apple.touchBar = {
+    enable = true; 
+    settings = {
+      DoublePressSwitchLayers = 200;
+    };
+  };
+  
+#  services.tiny-dfr.enable = true;
+
+  services.libinput.enable = true;
+  environment.etc."libinput/local-overrides.quirks".text = ''
+    [MacBook(Pro) SPI Touchpads]
+    MatchName=*Apple SPI Touchpad*
+    ModelAppleTouchpad=1
+    AttrTouchSizeRange=200:150
+    AttrPalmSizeThreshold=1100
+
+    [MacBook(Pro) SPI Keyboards]
+    MatchName=*Apple SPI Keyboard*
+    AttrKeyboardIntegration=internal
+
+    [MacBookPro Touchbar]
+    MatchBus=usb
+    MatchVendor=0x05AC
+    MatchProduct=0x8600
+    AttrKeyboardIntegration=internal
+  '';
 
   # Lid switch configuration
   services.logind.settings.Login = {
     HandleLidSwitch = "suspend";
     HandleLidSwitchExternalPower = "suspend";
-    HandleLidSwitchDocked = "ignore";
+    HandleLidSwitchDocked = "suspend";
   };
   systemd.services.enable-macbook-wakeup = {
     description = "Enable wake sources for MacBook lid open";
@@ -74,5 +103,7 @@ in {
   swapDevices = [ ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+  networking.enableB43Firmware = lib.mkDefault true;
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+  hardware.enableRedistributableFirmware = lib.mkDefault true;
 }

@@ -108,6 +108,7 @@
     gh
     gnupg
     yubikey-personalization
+    tiny-dfr
   ];
 
 
