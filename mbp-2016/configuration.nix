@@ -76,9 +76,6 @@
     #media-session.enable = true;
   };
 
-  # Enable touchpad support (enabled default in most desktopManager).
-  services.libinput.enable = true;
-
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.maximiliani = {
     isNormalUser = true;
@@ -109,8 +106,10 @@
     gnupg
     yubikey-personalization
     tiny-dfr
+    openssh
   ];
 
+  services.openssh.enable = true;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
@@ -119,27 +118,24 @@
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "25.11"; # Did you read the comment?
-
-  nix.settings = {
-      experimental-features = [ "nix-command" "flakes" ];
+  nix = {
+    settings.experimental-features = [ "nix-command" "flakes" ];
+    settings.auto-optimize-store = true;
+    registry.nixpkgs.flake = inputs.nixpkgs;
+    gc = {
+      automatic = true;
+      dates = "daily";
+      options = "--delete-older-than 14d";
     };
-  nix.registry.nixpkgs.flake = inputs.nixpkgs;
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 14d";
   };
-
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
   fonts = {
     enableDefaultPackages = true;
-
     packages = with pkgs; [
       meslo-lgs-nf
     ];
-
     fontconfig.defaultFonts = {
       serif = [ "MesloLGS NF Regular" ];
       sansSerif = [ "MesloLGS NF Regular" ];
