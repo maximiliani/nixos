@@ -8,6 +8,7 @@
   pkgs,
   config,
   inputs,
+  self,
   ...
 } @ args:
 
@@ -120,7 +121,7 @@
   system.stateVersion = "25.11"; # Did you read the comment?
   nix = {
     settings.experimental-features = [ "nix-command" "flakes" ];
-    settings.auto-optimize-store = true;
+    settings.auto-optimise-store = true;
     registry.nixpkgs.flake = inputs.nixpkgs;
     gc = {
       automatic = true;
@@ -165,4 +166,16 @@
   security.pam.sshAgentAuth.enable = true;
   security.sudo.extraConfig = "Defaults env_keep += SSH_AUTH_SOCK";
   services.udev.packages = [ pkgs.yubikey-personalization ];  # Enable the OpenSSH daemon to use a YubiKey for SSH authentication.
+
+  # Sops
+  sops = {
+    defaultSopsFile = self + /secrets/mbp-2016/default.yaml;
+    age = {
+      keyFile = "/var/lib/sops-nix/key.txt";
+      generateKey = true;
+    };
+    secrets = {
+      hello = { };
+    };
+  };
 }

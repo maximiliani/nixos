@@ -2,6 +2,7 @@ keys:
   - &admin B054287D42FC91AD36137D9F03ECA132FD38CD59
   - &t420 age1zlmedva0jsdys79d39qgy595clx5zemjzl2w0qpgewq2psj5yggswgltf2
   - &vps2-de-berlin age1r9g435pu74yvnp8t44jj7z4qfj829v3w43ae7fgzxvusqu3y9cnq9pute3
+  - &mbp-2016 age10fg3nznhct8ke3h2yckdxp2vm3hhh5ej9s3w4adzm8p55twamsrqhnaq3s
 creation_rules:
   - path_regex: ^secrets/vps2-de-berlin/.*$
     key_groups:
@@ -9,7 +10,8 @@ creation_rules:
           - *admin
         age:
           - *t420
-          - *vps2-de-berlin 
+          - *vps2-de-berlin
+          - *mbp-2016
   - path_regex: ^secrets/t420/.*$
     key_groups:
       - pgp:
@@ -24,3 +26,10 @@ creation_rules:
         age:
           - *vps2-de-berlin
           - *t420
+          - *mbp-2016
+  - path_regex: ^secrets/mbp-2016/.*$
+    key_groups:
+      - pgp:
+          - *admin
+        age:
+          - *mbp-2016
