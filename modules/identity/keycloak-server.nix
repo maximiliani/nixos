@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  inherit (lib) elem mkEnableOption mkIf mkOption types;
+  inherit (lib) elem mkEnableOption mkIf mkOption recursiveUpdate types;
   cfg = config.inckmann.identity.keycloak;
   bootstrap = config.inckmann.vpn.bootstrap;
   usingBootstrap = bootstrap.generateOnFirstInstall && elem "keycloak" bootstrap.secretGroups;
@@ -35,6 +35,18 @@ in
       type = types.port;
       default = 8081;
       description = "Local HTTP port for reverse-proxy ingress.";
+    };
+
+    realmFiles = mkOption {
+      type = types.listOf types.path;
+      default = [ ];
+      description = "Realm JSON files imported by Keycloak on startup.";
+    };
+
+    settings = mkOption {
+      type = types.attrs;
+      default = { };
+      description = "Additional Keycloak settings merged with production-safe defaults.";
     };
 
     database = {
@@ -104,15 +116,18 @@ in
 
     services.keycloak = {
       enable = true;
-      initialAdminPasswordFile = effectiveAdminPasswordFile;
+      realmFiles = cfg.realmFiles;
       database = {
         type = "postgresql";
         host = cfg.database.host;
         name = cfg.database.name;
-        user = cfg.database.user;
+        username = cfg.database.user;
         passwordFile = effectiveDbPasswordFile;
       };
-      settings = {
+      initialAdminPasswordFile = effectiveAdminPasswordFile;
+      settings = recursiveUpdate {
+        bootstrap-admin-username = "admin";
+        bootstrap-admin-password._secret = effectiveAdminPasswordFile;
         hostname = cfg.hostname;
         hostname-strict = true;
         http-enabled = true;
@@ -121,7 +136,7 @@ in
         proxy-headers = "xforwarded";
         health-enabled = true;
         metrics-enabled = true;
-      };
+      } cfg.settings;
     };
 
     systemd.services.keycloak = mkIf usingBootstrap {

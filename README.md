@@ -124,6 +124,10 @@ Current `vps2` config already includes:
 - `inckmann.identity.keycloak.hostname = "auth.inckmann.de";`
 - `auth.inckmann.de -> 127.0.0.1:8081` edge target
 
+Recommended production knobs:
+- `inckmann.identity.keycloak.realmFiles = [ ./realms/inckmann.json ];` for declarative realm bootstrap/import.
+- `inckmann.identity.keycloak.settings = { ... };` for explicit hardening/tuning overrides (merged on top of defaults like strict hostname, proxy headers, health, and metrics).
+
 ## First-install bootstrap (optional)
 
 You can let NixOS generate missing VPN bootstrap secrets on first install:
