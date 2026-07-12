@@ -50,7 +50,6 @@ in
     
     networking.firewall = {
       trustedInterfaces = [ "tailscale0" ];
-      allowForward = cfg.allowForwarding;
     };
   };
 }
