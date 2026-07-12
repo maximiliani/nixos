@@ -1,9 +1,8 @@
 { config, lib, pkgs, ... }:
 let
-  inherit (lib) elem mkIf;
-  bootstrap = config.inckmann.vpn.bootstrap;
+  inherit (lib) mkIf;
   cfg = config.inckmann.identity.keycloak;
-  enabled = bootstrap.generateOnFirstInstall && elem "keycloak" bootstrap.secretGroups && cfg.enable;
+  enabled = cfg.bootstrap.enable && cfg.enable;
 in
 {
   config = mkIf enabled {
@@ -20,9 +19,8 @@ in
         set -euo pipefail
         umask 077
 
-        MARKER_FILE=${lib.escapeShellArg bootstrap.markerFile}
-        DB_PASSWORD_FILE=${lib.escapeShellArg bootstrap.paths.keycloakDbPassword}
-        ADMIN_PASSWORD_FILE=${lib.escapeShellArg bootstrap.paths.keycloakAdminPassword}
+        MARKER_FILE=/var/lib/inckmann-vpn-bootstrap/.keycloak-generated
+        DB_PASSWORD_FILE=${lib.escapeShellArg cfg.bootstrap.dbPasswordFile}
 
         ensure_parent_dir() {
           install -d -m 0700 "$(dirname "$1")"
@@ -49,9 +47,7 @@ in
         }
 
         random_secret_file "$DB_PASSWORD_FILE"
-        random_secret_file "$ADMIN_PASSWORD_FILE"
         secure_keycloak_file "$DB_PASSWORD_FILE"
-        secure_keycloak_file "$ADMIN_PASSWORD_FILE"
 
         ensure_parent_dir "$MARKER_FILE"
         date -u +"%Y-%m-%dT%H:%M:%SZ" > "$MARKER_FILE"

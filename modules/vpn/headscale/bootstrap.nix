@@ -1,11 +1,10 @@
 { config, lib, pkgs, ... }:
 let
-  inherit (lib) concatMapStringsSep elem mkIf;
-  bootstrap = config.inckmann.vpn.bootstrap;
+  inherit (lib) mkIf;
   cfg = config.inckmann.vpn.headscaleControl;
-  enabled = bootstrap.generateOnFirstInstall && elem "headscale" bootstrap.secretGroups && cfg.enable;
+  enabled = cfg.bootstrap.enable && cfg.enable;
   dnsMagic = if cfg.dns.magicDNS then "true" else "false";
-  dnsResolversYaml = concatMapStringsSep "\n" (resolver: "      - ${resolver}") cfg.dns.globalResolvers;
+  dnsResolversYaml = lib.concatMapStringsSep "\n" (resolver: "      - ${resolver}") cfg.dns.globalResolvers;
 in
 {
   config = mkIf enabled {
@@ -22,10 +21,10 @@ in
         set -euo pipefail
         umask 077
 
-        MARKER_FILE=${lib.escapeShellArg bootstrap.markerFile}
-        TEMPLATE_FILE=${lib.escapeShellArg bootstrap.paths.headscaleConfigTemplate}
-        CONFIG_FILE=${lib.escapeShellArg bootstrap.paths.headscaleConfig}
-        OIDC_SECRET_FILE=${lib.escapeShellArg bootstrap.paths.headscaleOidcClientSecret}
+        MARKER_FILE=/var/lib/inckmann-vpn-bootstrap/.headscale-generated
+        TEMPLATE_FILE=${lib.escapeShellArg cfg.bootstrap.configTemplateFile}
+        CONFIG_FILE=${lib.escapeShellArg cfg.bootstrap.configFile}
+        OIDC_SECRET_FILE=${lib.escapeShellArg cfg.bootstrap.oidcClientSecretFile}
 
         ensure_parent_dir() {
           install -d -m 0700 "$(dirname "$1")"
@@ -51,7 +50,7 @@ in
         if [ ! -s "$TEMPLATE_FILE" ]; then
           ensure_parent_dir "$TEMPLATE_FILE"
           cat > "$TEMPLATE_FILE" <<'EOF'
-server_url: https://${bootstrap.serverId}
+server_url: https://vpn.net.inckmann.de
 listen_addr: 0.0.0.0:8080
 metrics_listen_addr: 127.0.0.1:9090
 noise:
@@ -83,7 +82,7 @@ EOF
         if [ ! -s "$CONFIG_FILE" ]; then
           ensure_parent_dir "$CONFIG_FILE"
           cat > "$CONFIG_FILE" <<EOF
-server_url: https://${bootstrap.serverId}
+server_url: https://vpn.net.inckmann.de
 listen_addr: 0.0.0.0:8080
 metrics_listen_addr: 127.0.0.1:9090
 noise:
@@ -96,8 +95,8 @@ derp:
     enabled: false
 oidc:
   only_start_if_oidc_is_available: true
-  issuer: ${bootstrap.oidcIssuer}
-  client_id: ${bootstrap.oidcClientId}
+  issuer: https://auth.inckmann.de/realms/inckmann
+  client_id: headscale
   client_secret: $(cat "$OIDC_SECRET_FILE")
   scope: ["openid", "profile", "email", "groups"]
   allowed_groups: ["/admins", "/family", "/friends"]

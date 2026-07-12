@@ -1,14 +1,19 @@
 { config, lib, ... }:
 let
-  inherit (lib) elem mkEnableOption mkIf mkOption optionalAttrs optionals types;
+  inherit (lib) mkEnableOption mkIf mkOption optionalAttrs optionals types;
   cfg = config.inckmann.vpn.wireguardGateway;
-  bootstrap = config.inckmann.vpn.bootstrap;
-  usingBootstrap = bootstrap.generateOnFirstInstall && elem "wireguard" bootstrap.secretGroups;
+  usingBootstrap = !cfg.manageSopsSecrets && cfg.bootstrap.enable;
   effectivePrivateKeyFile =
     if usingBootstrap && cfg.privateKeyFile == "/run/secrets/wireguard_gateway_private_key"
-    then bootstrap.paths.wireguardGatewayPrivateKey
+    then cfg.bootstrap.privateKeyFile
+    else if cfg.manageSopsSecrets
+    then config.sops.secrets.wireguard_gateway_private_key.path
     else cfg.privateKeyFile;
-  declareSopsSecret = cfg.manageSopsSecret && !usingBootstrap;
+  effectivePresharedKeyFile =
+    if cfg.presharedKeyFile != null && cfg.manageSopsSecrets
+    then config.sops.secrets.wireguard_gateway_preshared_key.path
+    else cfg.presharedKeyFile;
+  declareSopsSecret = cfg.manageSopsSecrets && !usingBootstrap;
 in
 {
   options.inckmann.vpn.wireguardGateway = {
@@ -44,6 +49,12 @@ in
       description = "Declare wireguard_gateway_private_key secret via sops-nix when enabled.";
     };
 
+    presharedKeyFile = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "Global PSK file for all peers (null = disabled).";
+    };
+
     openFirewall = mkOption {
       type = types.bool;
       default = true;
@@ -77,11 +88,23 @@ in
       default = [ ];
       description = "WireGuard peers.";
     };
+
+    bootstrap = {
+      enable = mkEnableOption "bootstrap-based secret generation";
+
+      privateKeyFile = mkOption {
+        type = types.str;
+        default = "/var/lib/inckmann-vpn-bootstrap/secrets/wireguard-private-key";
+        description = "Bootstrap-generated private key path.";
+      };
+    };
   };
 
   config = mkIf cfg.enable {
     sops.secrets = mkIf declareSopsSecret {
       wireguard_gateway_private_key = { };
+    } // mkIf (cfg.presharedKeyFile != null && declareSopsSecret) {
+      wireguard_gateway_preshared_key = { };
     };
 
     networking.firewall.allowedUDPPorts = optionals cfg.openFirewall [ cfg.listenPort ];

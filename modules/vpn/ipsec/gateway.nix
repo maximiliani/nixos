@@ -2,19 +2,24 @@
 let
   inherit (lib) elem mapAttrs mkEnableOption mkIf mkOption optionals recursiveUpdate types;
   cfg = config.inckmann.vpn.ipsecGateway;
-  bootstrap = config.inckmann.vpn.bootstrap;
-  usingBootstrap = bootstrap.generateOnFirstInstall && elem "ipsec" bootstrap.secretGroups;
+  usingBootstrap = !cfg.manageSopsSecrets && cfg.bootstrap.enable;
   effectiveServerKeyFile =
     if usingBootstrap && cfg.serverKeyFile == "/run/secrets/ipsec_gateway_server_key"
-    then bootstrap.paths.ipsecGatewayServerKey
+    then cfg.bootstrap.serverKeyFile
+    else if cfg.manageSopsSecrets
+    then config.sops.secrets.ipsec_gateway_server_key.path
     else cfg.serverKeyFile;
   effectiveServerCertFile =
     if usingBootstrap && cfg.serverCertFile == "/run/secrets/ipsec_gateway_server_cert"
-    then bootstrap.paths.ipsecGatewayServerCert
+    then cfg.bootstrap.serverCertFile
+    else if cfg.manageSopsSecrets
+    then config.sops.secrets.ipsec_gateway_server_cert.path
     else cfg.serverCertFile;
   effectiveCaCertFile =
     if usingBootstrap && cfg.caCertFile == "/run/secrets/ipsec_gateway_ca_cert"
-    then bootstrap.paths.ipsecGatewayCaCert
+    then cfg.bootstrap.caCertFile
+    else if cfg.manageSopsSecrets
+    then config.sops.secrets.ipsec_gateway_ca_cert.path
     else cfg.caCertFile;
   declareSopsSecrets = cfg.manageSopsSecrets && !usingBootstrap;
   defaultSettings = {
@@ -125,6 +130,28 @@ in
       type = types.bool;
       default = true;
       description = "Declare IPSec secret files via sops-nix when enabled.";
+    };
+
+    bootstrap = {
+      enable = mkEnableOption "bootstrap-based secret generation";
+
+      serverKeyFile = mkOption {
+        type = types.str;
+        default = "/var/lib/inckmann-vpn-bootstrap/secrets/ipsec-server-key";
+        description = "Bootstrap-generated server key path.";
+      };
+
+      serverCertFile = mkOption {
+        type = types.str;
+        default = "/var/lib/inckmann-vpn-bootstrap/secrets/ipsec-server-cert";
+        description = "Bootstrap-generated server cert path.";
+      };
+
+      caCertFile = mkOption {
+        type = types.str;
+        default = "/var/lib/inckmann-vpn-bootstrap/secrets/ipsec-ca-cert";
+        description = "Bootstrap-generated CA cert path.";
+      };
     };
   };
 

@@ -22,16 +22,10 @@
   };
 
   inckmann.vpn = {
-    bootstrap = {
-      generateOnFirstInstall = true;
-      secretGroups = [ "keycloak" "headscale" "wireguard" "ipsec" ];
-      serverId = "vpn.net.inckmann.de";
-      oidcIssuer = "https://auth.inckmann.de/realms/inckmann";
-      oidcClientId = "headscale";
-    };
-    # Enabled incrementally once matching DNS and realm/client setup are in place.
     headscaleControl = {
       enable = true;
+      bootstrap.enable = true;
+      manageSopsSecrets = false;
       dns.baseDomain = "headscale.inckmann.de";
       keycloakOidc = {
         enable = true;
@@ -42,16 +36,29 @@
     derpRelay.enable = false;
     exitNode.enable = false;
     siteGateway.enable = false;
-    wireguardGateway.enable = false;
+    wireguardGateway = {
+      enable = true;
+      bootstrap.enable = true;
+      manageSopsSecrets = false;
+      listenPort = 51820;
+      addresses = [ "10.66.200.1/24" ];
+      presharedKeyFile = null;
+      peers = [ ];
+    };
     ipsecGateway = {
-      enable = false;
+      enable = true;
+      bootstrap.enable = true;
+      manageSopsSecrets = false;
       serverId = "vpn.net.inckmann.de";
+      poolCidr = "10.66.210.0/24";
       eapUsers = { };
     };
   };
 
   inckmann.identity.keycloak = {
     enable = true;
+    bootstrap.enable = true;
+    manageSopsSecrets = false;
     hostname = "auth.inckmann.de";
     localHttpPort = 8081;
   };
@@ -93,7 +100,7 @@
 
   system.stateVersion = "25.11";
 
-  # Sops
+  # Sops - kept for future migration
   sops = {
     defaultSopsFile = self + /secrets/vps2-de-berlin/default.yaml;
     age = {

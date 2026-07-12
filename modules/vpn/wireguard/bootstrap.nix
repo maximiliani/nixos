@@ -1,9 +1,8 @@
 { config, lib, pkgs, ... }:
 let
-  inherit (lib) elem mkIf;
-  bootstrap = config.inckmann.vpn.bootstrap;
+  inherit (lib) mkIf;
   cfg = config.inckmann.vpn.wireguardGateway;
-  enabled = bootstrap.generateOnFirstInstall && elem "wireguard" bootstrap.secretGroups && cfg.enable;
+  enabled = cfg.bootstrap.enable && cfg.enable;
 in
 {
   config = mkIf enabled {
@@ -20,8 +19,8 @@ in
         set -euo pipefail
         umask 077
 
-        MARKER_FILE=${lib.escapeShellArg bootstrap.markerFile}
-        WG_KEY_FILE=${lib.escapeShellArg bootstrap.paths.wireguardGatewayPrivateKey}
+        MARKER_FILE=/var/lib/inckmann-vpn-bootstrap/.wireguard-generated
+        WG_KEY_FILE=${lib.escapeShellArg cfg.bootstrap.privateKeyFile}
 
         ensure_parent_dir() {
           install -d -m 0700 "$(dirname "$1")"

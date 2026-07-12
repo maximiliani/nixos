@@ -1,18 +1,20 @@
 {
   imports = [
-    ./bootstrap/options.nix
+    ./headscale/options.nix
+    ./headscale/control.nix
+    ./headscale/bootstrap.nix
+    ./wireguard/options.nix
+    ./wireguard/gateway.nix
+    ./wireguard/bootstrap.nix
+    ./ipsec/options.nix
+    ./ipsec/gateway.nix
+    ./ipsec/bootstrap.nix
+    ./derp-relay.nix
+    ./exit-node.nix
+    ./site-gateway.nix
     ./fleet-node-defaults.nix
     ./fleet-ssh-aliases.nix
     ./role-metadata.nix
     ./managed-client.nix
-    ./headscale/control.nix
-    ./headscale/bootstrap.nix
-    ./derp-relay.nix
-    ./exit-node.nix
-    ./site-gateway.nix
-    ./wireguard/gateway.nix
-    ./wireguard/bootstrap.nix
-    ./ipsec/gateway.nix
-    ./ipsec/bootstrap.nix
   ];
 }

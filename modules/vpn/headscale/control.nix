@@ -2,19 +2,20 @@
 let
   inherit (lib) elem mkEnableOption mkIf mkOption optionals optionalString types;
   cfg = config.inckmann.vpn.headscaleControl;
-  bootstrap = config.inckmann.vpn.bootstrap;
-  usingBootstrap = bootstrap.generateOnFirstInstall && elem "headscale" bootstrap.secretGroups;
+  usingBootstrap = !cfg.manageSopsSecrets && cfg.bootstrap.enable;
   effectiveConfigFile =
     if usingBootstrap && cfg.configFile == "/run/secrets/headscale_config"
-    then bootstrap.paths.headscaleConfig
+    then cfg.bootstrap.configFile
     else cfg.configFile;
   effectiveConfigTemplateFile =
     if usingBootstrap && cfg.configTemplateFile == "/run/secrets/headscale_config_template"
-    then bootstrap.paths.headscaleConfigTemplate
+    then cfg.bootstrap.configTemplateFile
     else cfg.configTemplateFile;
   effectiveOidcClientSecretFile =
     if usingBootstrap && cfg.keycloakOidc.clientSecretFile == "/run/secrets/headscale_oidc_client_secret"
-    then bootstrap.paths.headscaleOidcClientSecret
+    then cfg.bootstrap.oidcClientSecretFile
+    else if cfg.manageSopsSecrets
+    then config.sops.secrets.headscale_oidc_client_secret.path
     else cfg.keycloakOidc.clientSecretFile;
   declareSopsSecrets = cfg.manageSopsSecrets && !usingBootstrap;
 in

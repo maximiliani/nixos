@@ -1,9 +1,8 @@
 { config, lib, pkgs, ... }:
 let
-  inherit (lib) elem mkIf;
-  bootstrap = config.inckmann.vpn.bootstrap;
+  inherit (lib) mkIf;
   cfg = config.inckmann.vpn.ipsecGateway;
-  enabled = bootstrap.generateOnFirstInstall && elem "ipsec" bootstrap.secretGroups && cfg.enable;
+  enabled = cfg.bootstrap.enable && cfg.enable;
 in
 {
   config = mkIf enabled {
@@ -20,10 +19,10 @@ in
         set -euo pipefail
         umask 077
 
-        MARKER_FILE=${lib.escapeShellArg bootstrap.markerFile}
-        KEY_FILE=${lib.escapeShellArg bootstrap.paths.ipsecGatewayServerKey}
-        CERT_FILE=${lib.escapeShellArg bootstrap.paths.ipsecGatewayServerCert}
-        CA_FILE=${lib.escapeShellArg bootstrap.paths.ipsecGatewayCaCert}
+        MARKER_FILE=/var/lib/inckmann-vpn-bootstrap/.ipsec-generated
+        KEY_FILE=${lib.escapeShellArg cfg.bootstrap.serverKeyFile}
+        CERT_FILE=${lib.escapeShellArg cfg.bootstrap.serverCertFile}
+        CA_FILE=${lib.escapeShellArg cfg.bootstrap.caCertFile}
 
         ensure_parent_dir() {
           install -d -m 0700 "$(dirname "$1")"
@@ -56,7 +55,7 @@ in
 
           openssl genrsa -out "$KEY_FILE" 4096
           openssl req -new -key "$KEY_FILE" \
-            -subj "/CN=${bootstrap.serverId}" \
+            -subj "/CN=${cfg.serverId}" \
             -out "$tmpdir/server.csr"
           openssl x509 -req -in "$tmpdir/server.csr" \
             -CA "$CA_FILE" -CAkey "$tmpdir/ca.key" -CAcreateserial \

@@ -1,17 +1,14 @@
 { config, lib, ... }:
 let
-  inherit (lib) elem mkEnableOption mkIf mkOption recursiveUpdate types;
+  inherit (lib) mkEnableOption mkIf mkOption recursiveUpdate types;
   cfg = config.inckmann.identity.keycloak;
-  bootstrap = config.inckmann.vpn.bootstrap;
-  usingBootstrap = bootstrap.generateOnFirstInstall && elem "keycloak" bootstrap.secretGroups;
+  usingBootstrap = !cfg.manageSopsSecrets && cfg.bootstrap.enable;
   effectiveDbPasswordFile =
-    if usingBootstrap && cfg.database.passwordFile == "/run/secrets/keycloak_db_password"
-    then bootstrap.paths.keycloakDbPassword
+    if usingBootstrap
+    then cfg.bootstrap.dbPasswordFile
+    else if cfg.manageSopsSecrets
+    then config.sops.secrets.keycloak_db_password.path
     else cfg.database.passwordFile;
-  effectiveAdminPasswordFile =
-    if usingBootstrap && cfg.adminPasswordFile == "/run/secrets/keycloak_admin_password"
-    then bootstrap.paths.keycloakAdminPassword
-    else cfg.adminPasswordFile;
   declareSopsSecrets = cfg.manageSopsSecrets && !usingBootstrap;
   edgeProxyCfg = config.inckmann.networking.edgeProxy;
 in
@@ -65,11 +62,6 @@ in
         default = "keycloak";
         description = "Keycloak database user.";
       };
-      createLocally = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Provision local PostgreSQL database and user.";
-      };
       passwordFile = mkOption {
         type = types.str;
         default = "/run/secrets/keycloak_db_password";
@@ -77,10 +69,14 @@ in
       };
     };
 
-    adminPasswordFile = mkOption {
-      type = types.str;
-      default = "/run/secrets/keycloak_admin_password";
-      description = "Initial Keycloak admin password file path.";
+    bootstrap = {
+      enable = mkEnableOption "bootstrap-based secret generation";
+
+      dbPasswordFile = mkOption {
+        type = types.str;
+        default = "/var/lib/inckmann-vpn-bootstrap/secrets/keycloak-db-password";
+        description = "Bootstrap-generated DB password path.";
+      };
     };
   };
 
@@ -91,20 +87,13 @@ in
         message = "inckmann.identity.keycloak requires inckmann.networking.edgeProxy.targets.\"${cfg.hostname}\" when edge proxy is enabled.";
       }
       {
-        assertion = (!cfg.database.createLocally) || cfg.database.host == "localhost";
-        message = "inckmann.identity.keycloak.database.createLocally requires database.host = \"localhost\".";
+        assertion = cfg.database.host == "localhost";
+        message = "inckmann.identity.keycloak requires database.host = \"localhost\" with local PostgreSQL provisioning.";
       }
     ];
 
     sops.secrets = mkIf declareSopsSecrets {
-      keycloak_db_password = {
-        owner = "keycloak";
-        group = "keycloak";
-      };
-      keycloak_admin_password = {
-        owner = "keycloak";
-        group = "keycloak";
-      };
+      keycloak_db_password = { };
     };
 
     services.keycloak = {
@@ -112,15 +101,13 @@ in
       realmFiles = cfg.realmFiles;
       database = {
         type = "postgresql";
-        createLocally = cfg.database.createLocally;
+        createLocally = true;
         host = cfg.database.host;
         name = cfg.database.name;
         username = cfg.database.user;
         passwordFile = effectiveDbPasswordFile;
       };
       settings = recursiveUpdate {
-        bootstrap-admin-username = "admin";
-        bootstrap-admin-password._secret = effectiveAdminPasswordFile;
         hostname = cfg.hostname;
         hostname-strict = true;
         http-enabled = true;
@@ -130,11 +117,6 @@ in
         health-enabled = true;
         metrics-enabled = true;
       } cfg.settings;
-    };
-
-    systemd.services.keycloak = mkIf usingBootstrap {
-      after = [ "inckmann-keycloak-bootstrap-secrets.service" ];
-      requires = [ "inckmann-keycloak-bootstrap-secrets.service" ];
     };
   };
 }
