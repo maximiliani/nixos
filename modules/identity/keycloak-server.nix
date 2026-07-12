@@ -1,0 +1,132 @@
+{ config, lib, ... }:
+let
+  inherit (lib) elem mkEnableOption mkIf mkOption types;
+  cfg = config.inckmann.identity.keycloak;
+  bootstrap = config.inckmann.vpn.bootstrap;
+  usingBootstrap = bootstrap.generateOnFirstInstall && elem "keycloak" bootstrap.secretGroups;
+  effectiveDbPasswordFile =
+    if usingBootstrap && cfg.database.passwordFile == "/run/secrets/keycloak_db_password"
+    then bootstrap.paths.keycloakDbPassword
+    else cfg.database.passwordFile;
+  effectiveAdminPasswordFile =
+    if usingBootstrap && cfg.adminPasswordFile == "/run/secrets/keycloak_admin_password"
+    then bootstrap.paths.keycloakAdminPassword
+    else cfg.adminPasswordFile;
+  declareSopsSecrets = cfg.manageSopsSecrets && !usingBootstrap;
+  edgeProxyCfg = config.inckmann.networking.edgeProxy;
+in
+{
+  options.inckmann.identity.keycloak = {
+    enable = mkEnableOption "Keycloak identity server";
+
+    manageSopsSecrets = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Declare Keycloak password secrets via sops-nix when enabled.";
+    };
+
+    hostname = mkOption {
+      type = types.str;
+      default = "auth.inckmann.de";
+      description = "Public hostname for Keycloak.";
+    };
+
+    localHttpPort = mkOption {
+      type = types.port;
+      default = 8081;
+      description = "Local HTTP port for reverse-proxy ingress.";
+    };
+
+    database = {
+      host = mkOption {
+        type = types.str;
+        default = "/run/postgresql";
+        description = "PostgreSQL host/socket for Keycloak.";
+      };
+      name = mkOption {
+        type = types.str;
+        default = "keycloak";
+        description = "Keycloak database name.";
+      };
+      user = mkOption {
+        type = types.str;
+        default = "keycloak";
+        description = "Keycloak database user.";
+      };
+      createLocally = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Provision local PostgreSQL database and user.";
+      };
+      passwordFile = mkOption {
+        type = types.str;
+        default = "/run/secrets/keycloak_db_password";
+        description = "Database password file path.";
+      };
+    };
+
+    adminPasswordFile = mkOption {
+      type = types.str;
+      default = "/run/secrets/keycloak_admin_password";
+      description = "Initial Keycloak admin password file path.";
+    };
+  };
+
+  config = mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = (!edgeProxyCfg.enable) || builtins.hasAttr cfg.hostname edgeProxyCfg.targets;
+        message = "inckmann.identity.keycloak requires inckmann.networking.edgeProxy.targets.\"${cfg.hostname}\" when edge proxy is enabled.";
+      }
+    ];
+
+    sops.secrets = mkIf declareSopsSecrets {
+      keycloak_db_password = {
+        owner = "keycloak";
+        group = "keycloak";
+      };
+      keycloak_admin_password = {
+        owner = "keycloak";
+        group = "keycloak";
+      };
+    };
+
+    services.postgresql = mkIf cfg.database.createLocally {
+      enable = true;
+      ensureDatabases = [ cfg.database.name ];
+      ensureUsers = [
+        {
+          name = cfg.database.user;
+          ensureDBOwnership = true;
+        }
+      ];
+    };
+
+    services.keycloak = {
+      enable = true;
+      initialAdminPasswordFile = effectiveAdminPasswordFile;
+      database = {
+        type = "postgresql";
+        host = cfg.database.host;
+        name = cfg.database.name;
+        user = cfg.database.user;
+        passwordFile = effectiveDbPasswordFile;
+      };
+      settings = {
+        hostname = cfg.hostname;
+        hostname-strict = true;
+        http-enabled = true;
+        http-host = "127.0.0.1";
+        http-port = cfg.localHttpPort;
+        proxy-headers = "xforwarded";
+        health-enabled = true;
+        metrics-enabled = true;
+      };
+    };
+
+    systemd.services.keycloak = mkIf usingBootstrap {
+      after = [ "inckmann-keycloak-bootstrap-secrets.service" ];
+      requires = [ "inckmann-keycloak-bootstrap-secrets.service" ];
+    };
+  };
+}

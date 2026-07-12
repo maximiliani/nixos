@@ -10,6 +10,9 @@
     (modulesPath + "/installer/scan/not-detected.nix")
     (modulesPath + "/profiles/qemu-guest.nix")
     ./disk-config.nix
+    ../../modules/vpn
+    ../../modules/identity
+    ../../modules/networking
   ];
   boot.loader.grub = {
     # no need to set devices, disko will add all devices that have a EF02 partition to the list already
@@ -18,8 +21,49 @@
     efiInstallAsRemovable = true;
   };
 
-  networking.hostName = "vps2-de-berlin";
-  networking.domain = "net.inckmann.de";
+  inckmann.vpn = {
+    bootstrap = {
+      generateOnFirstInstall = true;
+      secretGroups = [ "keycloak" "headscale" "wireguard" "ipsec" ];
+      serverId = "vpn.net.inckmann.de";
+      oidcIssuer = "https://auth.inckmann.de/realms/inckmann";
+      oidcClientId = "headscale";
+    };
+    # Enabled incrementally once matching DNS and realm/client setup are in place.
+    headscaleControl = {
+      enable = true;
+      dns.baseDomain = "headscale.inckmann.de";
+      keycloakOidc = {
+        enable = true;
+        issuer = "https://auth.inckmann.de/realms/inckmann";
+        clientId = "headscale";
+      };
+    };
+    derpRelay.enable = false;
+    exitNode.enable = false;
+    siteGateway.enable = false;
+    wireguardGateway.enable = false;
+    ipsecGateway = {
+      enable = false;
+      serverId = "vpn.net.inckmann.de";
+      eapUsers = { };
+    };
+  };
+
+  inckmann.identity.keycloak = {
+    enable = true;
+    hostname = "auth.inckmann.de";
+    localHttpPort = 8081;
+  };
+
+  inckmann.networking.edgeProxy = {
+    enable = true;
+    targets = {
+      "newsticker.gsm.inckmann.de".upstream = "10.66.0.20:8080";
+      "db.newsticker.gsm.inckmann.de".upstream = "10.66.0.21:54321";
+      "auth.inckmann.de".upstream = "127.0.0.1:8081";
+    };
+  };
 
   environment.systemPackages = with pkgs; [
     curl

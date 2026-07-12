@@ -1,0 +1,5 @@
+{
+  imports = [
+    ./edge-proxy.nix
+  ];
+}
