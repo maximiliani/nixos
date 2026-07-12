@@ -189,7 +189,6 @@ in
     allowedTCPPorts = [ 80 443 ];  # ACME + HTTPS for Headscale
     allowedUDPPorts = [ 500 4500 51820 ];  # IPSec NAT-T/IKE + WireGuard
     trustedInterfaces = [ "tailscale0" "wg-gateway" ];
-    allowForward = true;
   };
   
   # === Edge Proxy ===
