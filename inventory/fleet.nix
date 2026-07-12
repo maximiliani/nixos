@@ -1,14 +1,4 @@
 let
-  splitHostname = fqdn:
-    let m = builtins.match "^([^.]+)\\.(.+)$" fqdn;
-    in
-    if m == null
-    then { host = fqdn; domain = ""; }
-    else {
-      host = builtins.elemAt m 0;
-      domain = builtins.elemAt m 1;
-    };
-
   data = {
     name = "inckmann-fleet";
     defaultDomain = "net.inckmann.de";
@@ -73,15 +63,11 @@ data
         if raw.publicHostname != null
         then raw.publicHostname
         else "${nodeName}.${data.defaultDomain}";
-      parsed = splitHostname computedPublicHostname;
     in
     raw // {
       name = nodeName;
       publicHostname = computedPublicHostname;
-      hostName = parsed.host;
-      domain =
-        if parsed.domain != ""
-        then parsed.domain
-        else data.defaultDomain;
+      hostName = raw.hostName or nodeName;
+      domain = raw.domain or data.defaultDomain;
     };
 }
