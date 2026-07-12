@@ -237,22 +237,22 @@ in
   # 2. Uncomment this section
   # 3. Set manageSopsSecrets = true for each service
   # 4. Remove /var/lib/inckmann-vpn-bootstrap/
-  # sops = {
-  #   defaultSopsFile = self + /secrets/vps2-de-berlin/default.yaml;
-  #   age = {
-  #     keyFile = "/var/lib/sops-nix/key.txt";
-  #     generateKey = true;
-  #   };
-  #   secrets = {
-  #     headscale_oidc_client_secret = { };
-  #     keycloak_db_password = { };
-  #     wireguard_gateway_private_key = { };
-  #     wireguard_gateway_preshared_key = { };
-  #     ipsec_gateway_server_key = { };
-  #     ipsec_gateway_server_cert = { };
-  #     ipsec_gateway_ca_cert = { };
-  #   };
-  # };
+   sops = {
+     defaultSopsFile = self + /secrets/vps2-de-berlin/default.yaml;
+     age = {
+       keyFile = "/var/lib/sops-nix/key.txt";
+       generateKey = true;
+     };
+     secrets = {
+       headscale_oidc_client_secret = { };
+       keycloak_db_password = { };
+       wireguard_gateway_private_key = { };
+       wireguard_gateway_preshared_key = { };
+       ipsec_gateway_server_key = { };
+       ipsec_gateway_server_cert = { };
+       ipsec_gateway_ca_cert = { };
+     };
+   };
   
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
