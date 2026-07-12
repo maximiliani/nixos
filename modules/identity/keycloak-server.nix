@@ -1,6 +1,6 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 let
-  inherit (lib) mkEnableOption mkIf mkOption recursiveUpdate types;
+  inherit (lib) mkEnableOption mkIf mkOption mkDefault recursiveUpdate types;
   cfg = config.inckmann.identity.keycloak;
   edgeProxyCfg = config.inckmann.networking.edgeProxy;
 in
@@ -54,7 +54,7 @@ in
       realmFiles = cfg.realmFiles;
       database = {
         type = "postgresql";
-        createLocally = true;
+        createLocally = false;
         host = "localhost";
         name = "keycloak";
         username = "keycloak";
@@ -70,6 +70,21 @@ in
         health-enabled = true;
         metrics-enabled = true;
       } cfg.settings;
+    };
+    
+    # Create PostgreSQL database and user for Keycloak
+    services.postgresql = {
+      enable = mkIf cfg.enable true;
+      package = mkDefault pkgs.postgresql_15;
+      ensureDatabases = [ "keycloak" ];
+      ensureUsers = [
+        {
+          name = "keycloak";
+          passwordFile = cfg.database.passwordFile;
+          ensureDBOwnership = true;
+          isSuperuser = false;
+        }
+      ];
     };
   };
 }
