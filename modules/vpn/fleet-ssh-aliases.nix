@@ -20,9 +20,6 @@ in
   options.inckmann.fleet.sshAliases.enable = mkEnableOption "fleet-derived SSH aliases";
 
   config = mkIf (hasFleetContext && config.inckmann.fleet.sshAliases.enable) {
-    programs.ssh = {
-      enable = true;
-      extraConfig = sshFleetConfig;
-    };
+    programs.ssh.extraConfig = sshFleetConfig;
   };
 }
