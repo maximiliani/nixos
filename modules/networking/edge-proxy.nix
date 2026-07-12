@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  inherit (lib) mapAttrs mkEnableOption mkIf mkOption optionals types;
+  inherit (lib) mapAttrs mkEnableOption mkIf mkOption optionalAttrs optionals types;
   cfg = config.inckmann.networking.edgeProxy;
 in
 {
@@ -25,6 +25,24 @@ in
             type = types.bool;
             default = false;
             description = "Request ACME certificate for this hostname.";
+          };
+
+          useACMEHost = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "Reuse ACME certificate from another configured hostname.";
+          };
+
+          sslCertificate = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "Path to TLS certificate PEM file for this hostname.";
+          };
+
+          sslCertificateKey = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "Path to TLS private key PEM file for this hostname.";
           };
 
           forceSSL = mkOption {
@@ -57,14 +75,30 @@ in
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
       virtualHosts = mapAttrs
-        (_serverName: target: {
-          enableACME = target.enableACME;
-          forceSSL = target.forceSSL;
-          locations."/" = {
-            proxyPass = "${target.upstreamScheme}://${target.upstream}";
-            proxyWebsockets = target.proxyWebsockets;
-          };
-        })
+        (_serverName: target:
+          let
+            hasTlsMaterial =
+              target.enableACME
+              || target.useACMEHost != null
+              || (target.sslCertificate != null && target.sslCertificateKey != null);
+          in
+          {
+            enableACME = target.enableACME;
+            forceSSL = target.forceSSL && hasTlsMaterial;
+            locations."/" = {
+              proxyPass = "${target.upstreamScheme}://${target.upstream}";
+              proxyWebsockets = target.proxyWebsockets;
+            };
+          }
+          // optionalAttrs (target.useACMEHost != null) {
+            useACMEHost = target.useACMEHost;
+          }
+          // optionalAttrs (target.sslCertificate != null) {
+            sslCertificate = target.sslCertificate;
+          }
+          // optionalAttrs (target.sslCertificateKey != null) {
+            sslCertificateKey = target.sslCertificateKey;
+          })
         cfg.targets;
     };
 
