@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  inherit (lib) elem mapAttrsToList mkEnableOption mkIf mkOption optionals recursiveUpdate types;
+  inherit (lib) elem mapAttrs mkEnableOption mkIf mkOption optionals recursiveUpdate types;
   cfg = config.inckmann.vpn.ipsecGateway;
   bootstrap = config.inckmann.vpn.bootstrap;
   usingBootstrap = bootstrap.generateOnFirstInstall && elem "ipsec" bootstrap.secretGroups;
@@ -24,12 +24,12 @@ let
       remote_addrs = [ "%any" ];
       pools = [ "ikev2-pool" ];
       proposals = cfg.ikeProposals;
-      local = {
+      local.main = {
         auth = "pubkey";
         id = cfg.serverId;
         certs = [ effectiveServerCertFile ];
       };
-      remote = {
+      remote.main = {
         auth = "eap-mschapv2";
         eap_id = "%any";
       };
@@ -41,22 +41,14 @@ let
     };
 
     pools."ikev2-pool" = {
-      addrs = [ cfg.poolCidr ];
+      addrs = cfg.poolCidr;
       dns = cfg.poolDnsServers;
     };
 
-    secrets =
-      [
-        {
-          id = cfg.serverId;
-          type = "private";
-          file = effectiveServerKeyFile;
-        }
-      ]
-      ++ (mapAttrsToList (id: secret: {
-        inherit id secret;
-        type = "eap";
-      }) cfg.eapUsers);
+    secrets.eap = mapAttrs (id: secret: {
+      id.main = id;
+      inherit secret;
+    }) cfg.eapUsers;
   };
 in
 {
@@ -145,7 +137,7 @@ in
 
     services.strongswan-swanctl = {
       enable = true;
-      settings = recursiveUpdate defaultSettings cfg.settingsOverrides;
+      swanctl = recursiveUpdate defaultSettings cfg.settingsOverrides;
     };
 
     environment.etc."ipsec-gateway/ca.crt".source = effectiveCaCertFile;
