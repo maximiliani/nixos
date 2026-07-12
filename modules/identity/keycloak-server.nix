@@ -124,7 +124,6 @@ in
         username = cfg.database.user;
         passwordFile = effectiveDbPasswordFile;
       };
-      initialAdminPasswordFile = effectiveAdminPasswordFile;
       settings = recursiveUpdate {
         bootstrap-admin-username = "admin";
         bootstrap-admin-password._secret = effectiveAdminPasswordFile;
