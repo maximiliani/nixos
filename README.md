@@ -30,201 +30,346 @@ export SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt
 find secrets -name "*" -type f -exec sops updatekeys {} -y \;
 ```
 
-## VPN module overview
+## VPN Infrastructure
 
-`flake.nix` exports:
+### Architecture
 
-```nix
-inputs.self.nixosModules.vpn
+This fleet uses a multi-VPN architecture with Headscale as the primary control plane:
+
+- **Headscale/Tailscale**: Primary mesh network with ACL-based access control
+- **WireGuard**: High-performance site-to-site tunnels (optional)
+- **IPSec (IKEv2)**: Mobile client support (iOS/Android native) (optional)
+- **Exit Node**: VPS-2 provides internet exit via all VPN technologies
+
+All VPN technologies route through a unified intranet with both IPv4 and IPv6 support.
+
+### Addressing
+
+| Network | IPv4 | IPv6 (ULA) | IPv6 (Public) |
+|---------|------|------------|---------------|
+| VPS-2 Public | `87.106.81.219/32` | - | `2a01:239:469:4c00::1/80` |
+| Intranet Gateway | `10.66.0.1/16` | `fd66:6600::1/64` | - |
+| Headscale Server | `100.64.0.1/10` | `fd66:6601::1/64` | `2a01:239:469:4c00::2/128` |
+| WireGuard Server | `10.66.200.1/24` | `fd66:6602::1/64` | `2a01:239:469:4c00::3/128` |
+| IPSec Pool Start | `10.66.210.1/24` | `fd66:6603::1/64` | `2a01:239:469:4c00::10/128` |
+
+**Client Addresses:**
+- t420: `100.64.0.2` (IPv4), `fd66:6601::2` (IPv6 ULA)
+- mbp-2016: `100.64.0.3` (IPv4), `fd66:6601::3` (IPv6 ULA)
+
+### Traffic Flow
+
+```
+                    Internet
+                       ↑
+              [VPS-2 Exit Node]
+         (87.106.81.219 / 2a01:239:469:4c00::1)
+              /    |    \
+     Headscale  WireGuard  IPSec
+         ↓          ↓         ↓
+    [Intranet 10.66.0.0/16 + fd66:6600::/64]
+         ↓
+    [t420, mbp-2016 clients]
 ```
 
-Role modules under `modules/vpn/`:
-- `managed-client.nix`
-- `headscale/control.nix`
-- `headscale/bootstrap.nix`
-- `derp-relay.nix`
-- `exit-node.nix`
-- `site-gateway.nix`
-- `wireguard/gateway.nix`
-- `wireguard/bootstrap.nix`
-- `ipsec/gateway.nix`
-- `ipsec/bootstrap.nix`
-- `bootstrap/options.nix`
+- **Default routing**: Headscale is preferred for inter-client traffic
+- **Exit node**: All traffic to `autogroup:internet` routes through VPS-2
+- **Intranet**: Direct routing between `10.66.0.0/16` and `fd66:6600::/64`
 
-Identity module:
-- `modules/identity/keycloak-server.nix`
-- `modules/identity/keycloak-bootstrap.nix`
+---
 
-Networking module:
-- `modules/networking/edge-proxy.nix`
+## Initial Setup (VPS-2)
 
-Inventory is tracked in `inventory/fleet.nix`.
-`serverProfile` is no longer used; node intent is expressed via `roles` and `tags`.
-
-`fleet.nix` is now the single source of truth for node identity.  
-Each node is resolved via `fleetInventory.getNode "<node-name>"`, which computes:
-- `name`
-- `hostName`
-- `domain`
-- `publicHostname` (defaults to `<name>.<defaultDomain>` when no public hostname is set)
-
-`flake.nix` passes this as `fleetNode` to host configs.  
-`modules/vpn/fleet-node-defaults.nix` now auto-derives:
-- `networking.hostName`
-- `networking.domain`
-- `inckmann.fleet.*`
-
-On all fleet-backed nodes, SSH client aliases are generated from fleet inventory automatically.
-You can log in using node name or host name shortcut, for example:
+### 1. Deploy configuration
 
 ```bash
-ssh vps2-de-berlin
+# From your local machine
+git push
+
+# SSH into VPS-2
+ssh root@vps2.de-berlin.net.inckmann.de
+
+# Deploy
+sudo nixos-rebuild switch --flake .#vps2-de-berlin
+```
+
+### 2. Bootstrap generates secrets automatically
+
+The bootstrap service runs on first boot and generates:
+- `/var/lib/inckmann-vpn-bootstrap/secrets/headscale-oidc-client-secret`
+- `/var/lib/inckmann-vpn-bootstrap/secrets/keycloak-db-password`
+- `/var/lib/inckmann-vpn-bootstrap/secrets/wireguard-private-key`
+- `/var/lib/inckmann-vpn-bootstrap/secrets/wireguard-psk`
+- `/var/lib/inckmann-vpn-bootstrap/secrets/ipsec-ca-cert`
+- `/var/lib/inckmann-vpn-bootstrap/secrets/ipsec-server-key`
+- `/var/lib/inckmann-vpn-bootstrap/secrets/ipsec-server-cert`
+
+### 3. Login to Tailscale/Headscale
+
+```bash
+# Get auth URL
+tailscale login --login-server=https://vpn.net.inckmann.de
+
+# Open URL in browser, authenticate via Keycloak OIDC
+# Copy the auth key and save it:
+echo "tskey-auth-..." > /var/lib/inckmann-vpn-bootstrap/secrets/tailscale-auth-key
+sudo systemctl restart tailscaled
+```
+
+### 4. Approve tags and routes
+
+In Headscale admin console (`https://vpn.net.inckmann.de/web`):
+- Approve `tag:vpn-gateway` for vps2-de-berlin
+- Approve advertised routes: `10.66.0.0/16`, `fd66:6600::/64`
+- Mark as exit node
+
+### 5. Verify services
+
+```bash
+systemctl status headscale
+systemctl status keycloak
+systemctl status tailscaled
+systemctl status wg-quick-wg-gateway
+systemctl status strongswan-swanctl
+```
+
+---
+
+## ACL Tags and Access Control
+
+Access is controlled via `headscale_acl.hujson`:
+
+| Tag | Purpose | Members |
+|-----|---------|---------|
+| `tag:vpn-gateway` | VPN infrastructure | vps2-de-berlin |
+| `tag:client` | Regular client devices | t420, mbp-2016 |
+| `tag:service` | Internal services | (future services) |
+
+**Groups:**
+- `group:admins`: `maximilian@inckmann.de` - full access
+- `group:fleet-nodes`: All enrolled devices
+
+**ACL Rules:**
+- Admins → vpn-gateway: full access
+- Clients → services: allowed
+- Everyone → `autogroup:internet`: exit node access
+- Self → self: device self-access
+- Members → intranet (`10.66.0.0/16`, `fd66:6600::/64`): full intranet access
+
+---
+
+## Adding WireGuard Peers
+
+Edit `inventory/fleet.nix` and add to `vps2-de-berlin.wireguardPeers`:
+
+```nix
+wireguardPeers = [
+  {
+    name = "fritzbox-home";
+    ipv4 = "10.66.200.2";
+    ipv6 = "fd66:6602::2";
+    publicKey = "generate-with-wg genkey | wg pubkey";
+  }
+];
+```
+
+Then update `servers/vps2.de-berlin.net.inckmann.de/configuration.nix`:
+
+```nix
+networking.wg-quick.interfaces.wg-gateway.peers = [
+  {
+    publicKey = "...";  # From fleet
+    allowedIPs = [ "10.66.200.2/32" "fd66:6602::2/128" ];
+    presharedKeyFile = "/var/lib/inckmann-vpn-bootstrap/secrets/wireguard-psk";
+    persistentKeepalive = 25;
+  }
+];
+```
+
+Deploy: `sudo nixos-rebuild switch --flake .#vps2-de-berlin`
+
+**Client configuration** (e.g., Fritz!Box or other WireGuard client):
+```ini
+[Interface]
+PrivateKey = <client-private-key>
+Address = 10.66.200.2/24, fd66:6602::2/64
+DNS = 1.1.1.1, 2606:4700:4700::1111
+
+[Peer]
+PublicKey = <vps2-server-public-key>
+PresharedKey = <psk-from-secrets>
+Endpoint = vpn.net.inckmann.de:51820
+AllowedIPs = 0.0.0.0/0, ::/0  # Full tunnel via exit node
+PersistentKeepalive = 25
+```
+
+---
+
+## Adding IPSec EAP Users
+
+Edit `inventory/fleet.nix` and add to `vps2-de-berlin.ipsecEapUsers`:
+
+```nix
+ipsecEapUsers = {
+  maximilian = "secure-password-here";
+};
+```
+
+Update `servers/vps2.de-berlin.net.inckmann.de/configuration.nix`:
+
+```nix
+services.strongswan-swanctl.swanctl.secrets.eap = {
+  maximilian = {
+    id.main = "maximilian";
+    secret = "secure-password-here";
+  };
+};
+```
+
+Deploy: `sudo nixos-rebuild switch --flake .#vps2-de-berlin`
+
+**Client configuration** (iOS/Android/Windows native IKEv2):
+- Server: `vpn.net.inckmann.de`
+- Remote ID: `vpn.net.inckmann.de`
+- Username: `maximilian`
+- Password: (from ipsecEapUsers)
+- CA Certificate: Import from `/var/lib/inckmann-vpn-bootstrap/secrets/ipsec-ca-cert`
+
+---
+
+## Client Enrollment
+
+### NixOS Clients (t420, mbp-2016)
+
+Already configured via `inckmann.vpn.managedClient` module. Just deploy:
+
+```bash
+sudo nixos-rebuild switch --flake .#t420
 # or
-ssh vps2
+sudo nixos-rebuild switch --flake .#mbp-2016
 ```
 
-## Headscale + Keycloak OIDC
-
-`modules/vpn/headscale/control.nix` supports template-based config rendering with OIDC secret injection:
-- template secret: `headscale_config_template`
-- OIDC client secret: `headscale_oidc_client_secret`
-- tailnet DNS base domain via `inckmann.vpn.headscaleControl.dns.baseDomain`
-
-The template must contain:
-
-```yaml
-client_secret: __HEADSCALE_OIDC_CLIENT_SECRET__
-base_domain: __HEADSCALE_DNS_BASE_DOMAIN__
-magic_dns: __HEADSCALE_DNS_MAGIC_DNS__
+Login when prompted:
+```bash
+tailscale login --login-server=https://vpn.net.inckmann.de
 ```
 
-At service start, the placeholder is replaced from `/run/secrets/headscale_oidc_client_secret`.
-Default node FQDN suffix is `headscale.inckmann.de`.
+### Non-NixOS Clients
 
-### DNS delegation / NS records
+Install Tailscale, then:
 
-Do **not** delegate public DNS (`NS`) for `headscale.inckmann.de` to Headscale.
-Headscale DNS is distributed to enrolled clients (MagicDNS), not operated as a public authoritative nameserver.
+```bash
+tailscale up --login-server https://vpn.net.inckmann.de
+```
 
-What to configure in public DNS instead:
-- `A/AAAA` records for your control endpoints (for example `vpn.net.inckmann.de`, `auth.inckmann.de`).
-- Keep normal public zone NS records on your DNS provider/authoritative DNS.
-- No `NS` delegation for `headscale.inckmann.de` is required for client node naming.
+Authenticate via Keycloak OIDC in browser.
 
-## Keycloak server on VPS2
+---
 
-`modules/identity/keycloak-server.nix` deploys:
-- local PostgreSQL (database/user auto-provision)
-- Keycloak service on `127.0.0.1:8081`
-- reverse-proxy ingress through `inckmann.networking.edgeProxy.targets."auth.inckmann.de"`
-- production defaults enabled (strict hostname, proxy header mode, health + metrics)
+## Migrating to Sops-Nix
 
-Current `vps2` config already includes:
-- `inckmann.identity.keycloak.enable = true;`
-- `inckmann.identity.keycloak.hostname = "auth.inckmann.de";`
-- `auth.inckmann.de -> 127.0.0.1:8081` edge target
+When ready to migrate from bootstrap to sops-nix:
 
-Recommended production knobs:
-- `inckmann.identity.keycloak.realmFiles = [ ./realms/inckmann.json ];` for declarative realm bootstrap/import.
-- `inckmann.identity.keycloak.settings = { ... };` for explicit hardening/tuning overrides (merged on top of defaults like strict hostname, proxy headers, health, and metrics).
+### 1. Generate secrets locally
 
-## First-install bootstrap (optional)
+```bash
+cd /Users/maximilian/GitHub/nixos
 
-You can let NixOS generate missing VPN bootstrap secrets on first install:
+# Headscale OIDC secret
+cat > secrets/vps2-de-berlin/headscale.yaml <<EOF
+headscale_oidc_client_secret: $(openssl rand -base64 36)
+EOF
+
+# Keycloak DB password
+cat > secrets/vps2-de-berlin/keycloak.yaml <<EOF
+keycloak_db_password: $(openssl rand -base64 36)
+EOF
+
+# WireGuard private key
+cat > secrets/vps2-de-berlin/wireguard.yaml <<EOF
+wireguard_gateway_private_key: $(wg genkey)
+EOF
+
+# WireGuard PSK
+cat > secrets/vps2-de-berlin/wireguard-psk.yaml <<EOF
+wireguard_gateway_preshared_key: $(openssl rand -base64 32)
+EOF
+```
+
+### 2. Encrypt with sops
+
+```bash
+sops -e -i secrets/vps2-de-berlin/headscale.yaml
+sops -e -i secrets/vps2-de-berlin/keycloak.yaml
+sops -e -i secrets/vps2-de-berlin/wireguard.yaml
+sops -e -i secrets/vps2-de-berlin/wireguard-psk.yaml
+```
+
+For IPSec certs, copy from bootstrap and encode:
+```bash
+# On VPS-2
+cat /var/lib/inckmann-vpn-bootstrap/secrets/ipsec-server-key | base64 -w0
+# Add to YAML with proper formatting, then encrypt
+```
+
+### 3. Update configuration
+
+In `servers/vps2.de-berlin.net.inckmann.de/configuration.nix`:
 
 ```nix
-inckmann.vpn.bootstrap.generateOnFirstInstall = true;
+# Change secret paths to use sops
+services.headscale.settings.oidc.client_secret_path = 
+  config.sops.secrets.headscale_oidc_client_secret.path;
+
+services.keycloak.database.passwordFile = 
+  config.sops.secrets.keycloak_db_password.path;
+
+networking.wg-quick.interfaces.wg-gateway.privateKeyFile = 
+  config.sops.secrets.wireguard_gateway_private_key.path;
 ```
 
-Behavior:
-- Runs per-domain one-shot units:
-  - `inckmann-keycloak-bootstrap-secrets.service`
-  - `inckmann-headscale-bootstrap-secrets.service`
-  - `inckmann-wireguard-bootstrap-secrets.service`
-  - `inckmann-ipsec-bootstrap-secrets.service`
-- Generates only missing files (idempotent on rebuild)
-- Stores local bootstrap files under `/var/lib/inckmann-vpn-bootstrap/secrets/`
-- Services are ordered after bootstrap generation when enabled
-
-Optional path override:
-
+Add sops declarations:
 ```nix
-inckmann.vpn.bootstrap.stateDir = "/var/lib/inckmann-vpn-bootstrap";
+sops.secrets = {
+  headscale_oidc_client_secret = {
+    sopsFile = self + /secrets/vps2-de-berlin/headscale.yaml;
+    owner = "headscale";
+    group = "headscale";
+  };
+  keycloak_db_password = {
+    sopsFile = self + /secrets/vps2-de-berlin/keycloak.yaml;
+    owner = "keycloak";
+    group = "keycloak";
+  };
+  # etc...
+};
 ```
 
-Generated files:
-- `keycloak_db_password`
-- `keycloak_admin_password`
-- `headscale_oidc_client_secret`
-- `headscale_config_template`
-- `headscale_config`
-- `wireguard_gateway_private_key`
-- `ipsec_gateway_server_key`
-- `ipsec_gateway_server_cert`
-- `ipsec_gateway_ca_cert`
-
-Important:
-- This mode is opt-in and does **not** replace long-term SOPS management.
-- After first provisioning, migrate/rotate into `secrets/<host>/default.yaml` and disable bootstrap mode.
-
-## Manual SOPS secret names for vps2
-
-Use these keys in `secrets/vps2-de-berlin/default.yaml`:
-- `keycloak_db_password`
-- `keycloak_admin_password`
-- `headscale_config_template`
-- `headscale_oidc_client_secret`
-- `wireguard_gateway_private_key`
-- `ipsec_gateway_server_key`
-- `ipsec_gateway_server_cert`
-- `ipsec_gateway_ca_cert`
-- `derp_tls_cert`
-- `derp_tls_key`
-- `acme_dns_api_token`
-
-Trusted client flow:
+### 4. Remove bootstrap state
 
 ```bash
-export SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt
-sops edit secrets/vps2-de-berlin/default.yaml
+sudo rm -rf /var/lib/inckmann-vpn-bootstrap/
 ```
 
-## VPS2 rollout
+---
 
-1. Choose bootstrap mode:
-   - **Preferred long-term:** put secrets into `secrets/vps2-de-berlin/default.yaml`
-   - **First-install bootstrap:** set `inckmann.vpn.bootstrap.generateOnFirstInstall = true;`
-2. Enable desired roles in `servers/vps2.de-berlin.net.inckmann.de/configuration.nix`:
-   - `inckmann.identity.keycloak.enable = true;`
-   - `inckmann.vpn.headscaleControl.enable = true;`
-   - `inckmann.vpn.headscaleControl.dns.baseDomain = "headscale.inckmann.de";`
-   - `inckmann.vpn.derpRelay.enable = true;`
-   - `inckmann.networking.edgeProxy.enable = true;`
-   - optional: `inckmann.vpn.wireguardGateway.enable = true;`
-   - optional: `inckmann.vpn.ipsecGateway.enable = true;`
-3. Rebuild:
+## Inventory Management
 
-```bash
-sudo nixos-rebuild switch --flake /etc/nixos#vps2-de-berlin
+All node metadata is in `inventory/fleet.nix`:
+- Network addresses (IPv4 + IPv6)
+- Roles and tags
+- WireGuard peers
+- IPSec users
+
+Access helper functions in Nix expressions:
+```nix
+let
+  fleetNode = fleetInventory.getNode "vps2-de-berlin";
+  vpnAddr = fleetInventory.getVpnAddresses "vps2-de-berlin";
+in { ... }
 ```
 
-4. Bootstrap first user:
-
-```bash
-sudo headscale users create maximilian
-sudo headscale preauthkeys create --user maximilian --reusable=false --expiration 24h
-```
-
-5. Bootstrap Keycloak realm/client for Headscale:
-   - create realm: `inckmann`
-   - create OIDC client: `headscale` (confidential)
-   - set client secret to value in `headscale_oidc_client_secret`
-   - ensure group claims are included (`groups`)
-
-6. If bootstrap mode was used:
-   - copy generated values into SOPS-managed host secrets
-   - rotate credentials/certs where needed
-   - set `inckmann.vpn.bootstrap.generateOnFirstInstall = false;`
+---
 
 ## Generic edge proxy targets
 
@@ -234,76 +379,18 @@ Configure domain -> upstream mappings:
 inckmann.networking.edgeProxy.targets = {
   "newsticker.gsm.inckmann.de".upstream = "10.66.0.20:8080";
   "db.newsticker.gsm.inckmann.de".upstream = "10.66.0.21:54321";
-  "auth.inckmann.de".upstream = "10.66.0.30:8080";
+  "auth.inckmann.de".upstream = "127.0.0.1:8081";
 };
 ```
 
 Assign to region by running the proxy role on the node in that region (for example `de-berlin` node serves `*.inckmann.de`).
 
-## NixOS managed clients (mbp-2016)
-
-`mbp-2016` is preconfigured as first managed client for user **Maximilian**.
-
-Enroll:
-
-```bash
-vpn-client-up --auth-key <HEADSCALE_PREAUTH_KEY>
-```
-
-## Non-NixOS managed clients
-
-Install Tailscale, then enroll against Headscale:
-
-```bash
-tailscale up --login-server https://vpn.net.inckmann.de --auth-key <HEADSCALE_PREAUTH_KEY>
-```
-
-## WireGuard gateway connections (Fritz!Box example)
-
-1. Choose target region node (example: `vps2-de-berlin`) and enable `wireguardGateway`.
-2. Create peer keys on client/device.
-3. Add peer in NixOS:
-
-```nix
-inckmann.vpn.wireguardGateway.peers = [
-  {
-    publicKey = "<FRITZBOX_PUBLIC_KEY>";
-    allowedIPs = [ "10.66.200.10/32" ];
-    persistentKeepalive = 25;
-  }
-];
-```
-
-4. Configure Fritz!Box WireGuard endpoint to that region hostname/IP (e.g. `vpn.net.inckmann.de:51820`).
-5. Region assignment is the selected gateway endpoint (Berlin endpoint => Berlin region).
-
-## IPSec gateway connections (Fritz!Box example)
-
-1. Enable `inckmann.vpn.ipsecGateway.enable = true;` on region node.
-2. Add user credential:
-
-```nix
-inckmann.vpn.ipsecGateway.eapUsers = {
-  fritzbox-home = "<STRONG_PASSWORD>";
-};
-```
-
-3. Import `ipsec_gateway_ca_cert` into client trust store.
-4. Configure Fritz!Box IKEv2 profile:
-   - Remote ID / server: `vpn.net.inckmann.de`
-   - Username: `fritzbox-home`
-   - Password: value from `eapUsers`
-5. Region assignment is the selected IPSec server endpoint.
-
-Override any generated IPSec boilerplate via:
-
-```nix
-inckmann.vpn.ipsecGateway.settingsOverrides = { ... };
-```
+---
 
 ## Adding users
 
-1. Create user in Keycloak.
-2. Assign groups (`admins`, `family`, `friends`, `exit-<region>-allowed`).
-3. Create Headscale user/preauth key.
-4. Enroll device and verify ACL policy.
+1. Create user in Keycloak (`https://auth.inckmann.de`)
+2. Assign groups (`admins`, `family`, `friends`)
+3. User enrolls device via Tailscale login
+4. Approve device and tags in Headscale admin console
+5. ACL policy automatically applies based on groups/tags

@@ -1,0 +1,58 @@
+{
+  "groups": {
+    "group:admins": [ "maximilian@inckmann.de" ],
+    "group:fleet-nodes": [
+      "vps2-de-berlin@inckmann.de",
+      "t420@inckmann.de",
+      "mbp-2016@inckmann.de"
+    ]
+  },
+  "tagOwners": {
+    "tag:vpn-gateway": [ "group:admins" ],
+    "tag:client": [ "group:admins" ],
+    "tag:service": [ "group:admins" ]
+  },
+  "autoApprovers": {
+    "routes": {
+      "10.66.0.0/16": [ "tag:vpn-gateway" ],
+      "fd66:6600::/64": [ "tag:vpn-gateway" ],
+      "192.168.0.0/16": [ "tag:vpn-gateway" ]
+    },
+    "exitNode": [ "tag:vpn-gateway" ]
+  },
+  "acls": [
+    {
+      "action": "accept",
+      "src": [ "group:admins" ],
+      "dst": [ "tag:vpn-gateway:*" ]
+    },
+    {
+      "action": "accept",
+      "src": [ "tag:client" ],
+      "dst": [ "tag:service:*" ]
+    },
+    {
+      "action": "accept",
+      "src": [ "*" ],
+      "dst": [ "autogroup:internet:*" ]
+    },
+    {
+      "action": "accept",
+      "src": [ "autogroup:self" ],
+      "dst": [ "autogroup:self:*" ]
+    },
+    {
+      "action": "accept",
+      "src": [ "autogroup:member" ],
+      "dst": [ "10.66.0.0/16:*", "fd66:6600::/64:*" ]
+    }
+  ],
+  "ssh": [
+    {
+      "action": "accept",
+      "src": [ "group:admins" ],
+      "dst": [ "tag:vpn-gateway" ],
+      "users": [ "root" ]
+    }
+  ]
+}
