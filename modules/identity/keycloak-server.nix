@@ -52,8 +52,8 @@ in
     database = {
       host = mkOption {
         type = types.str;
-        default = "/run/postgresql";
-        description = "PostgreSQL host/socket for Keycloak.";
+        default = "localhost";
+        description = "PostgreSQL hostname for Keycloak.";
       };
       name = mkOption {
         type = types.str;
@@ -90,6 +90,10 @@ in
         assertion = (!edgeProxyCfg.enable) || builtins.hasAttr cfg.hostname edgeProxyCfg.targets;
         message = "inckmann.identity.keycloak requires inckmann.networking.edgeProxy.targets.\"${cfg.hostname}\" when edge proxy is enabled.";
       }
+      {
+        assertion = (!cfg.database.createLocally) || cfg.database.host == "localhost";
+        message = "inckmann.identity.keycloak.database.createLocally requires database.host = \"localhost\".";
+      }
     ];
 
     sops.secrets = mkIf declareSopsSecrets {
@@ -103,22 +107,12 @@ in
       };
     };
 
-    services.postgresql = mkIf cfg.database.createLocally {
-      enable = true;
-      ensureDatabases = [ cfg.database.name ];
-      ensureUsers = [
-        {
-          name = cfg.database.user;
-          ensureDBOwnership = true;
-        }
-      ];
-    };
-
     services.keycloak = {
       enable = true;
       realmFiles = cfg.realmFiles;
       database = {
         type = "postgresql";
+        createLocally = cfg.database.createLocally;
         host = cfg.database.host;
         name = cfg.database.name;
         username = cfg.database.user;
