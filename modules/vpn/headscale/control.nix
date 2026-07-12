@@ -58,6 +58,26 @@ in
       description = "Declare required Headscale secret files via sops-nix when enabled.";
     };
 
+    dns = {
+      magicDNS = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Enable Headscale MagicDNS for managed clients.";
+      };
+
+      baseDomain = mkOption {
+        type = types.str;
+        default = "headscale.inckmann.de";
+        description = "Tailnet DNS suffix assigned to nodes (for example <node>.headscale.inckmann.de).";
+      };
+
+      globalResolvers = mkOption {
+        type = types.listOf types.str;
+        default = [ "1.1.1.1" "9.9.9.9" ];
+        description = "Upstream recursive resolvers used by Headscale DNS.";
+      };
+    };
+
     keycloakOidc = {
       enable = mkEnableOption "Keycloak OIDC secret injection";
 
@@ -65,26 +85,6 @@ in
         type = types.str;
         default = "https://auth.inckmann.de/realms/inckmann";
         description = "Keycloak realm issuer URL for OIDC.";
-      };
-
-      dns = {
-        magicDNS = mkOption {
-          type = types.bool;
-          default = true;
-          description = "Enable Headscale MagicDNS for managed clients.";
-        };
-
-        baseDomain = mkOption {
-          type = types.str;
-          default = "headscale.inckmann.de";
-          description = "Tailnet DNS suffix assigned to nodes (for example <node>.headscale.inckmann.de).";
-        };
-
-        globalResolvers = mkOption {
-          type = types.listOf types.str;
-          default = [ "1.1.1.1" "9.9.9.9" ];
-          description = "Upstream recursive resolvers used by Headscale DNS.";
-        };
       };
 
       clientId = mkOption {
