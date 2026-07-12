@@ -1,4 +1,4 @@
-{ modulesPath, lib, pkgs, inputs, self, fleetNode, ... }:
+{ config, modulesPath, lib, pkgs, inputs, self, fleetNode, ... }:
 let
   # Public networking from IONOS
   publicIpv4 = "87.106.81.219";
@@ -88,7 +88,7 @@ in
         only_start_if_oidc_is_available = true;
         issuer = "https://auth.inckmann.de/realms/inckmann";
         client_id = "headscale";
-        client_secret_path = config.sops.secrets."headscale-oidc-client-secret".path;
+        client_secret_path = config.sops.secrets."headscale_oidc_client_secret".path;
         scope = [ "openid" "profile" "email" "groups" ];
         allowed_groups = [ "/admins" "/family" "/friends" ];
       };
@@ -106,7 +106,7 @@ in
       "${wireguardPublicIpv6}/128"
     ];
     listenPort = 51820;
-    privateKeyFile = config.sops.secrets."wireguard-private-key".path;
+    privateKeyFile = config.sops.secrets."wireguard_private_key".path;
     peers = [
       # Add WireGuard peers here:
       # {
@@ -132,7 +132,7 @@ in
         local.main = {
           auth = "pubkey";
           id = "vpn.net.inckmann.de";
-          certs = [ config.sops.secrets."ipsec-server-cert".path ];
+          certs = [ config.sops.secrets."ipsec_server_cert".path ];
         };
 
         remote.main = {
@@ -159,14 +159,14 @@ in
     };
   };
 
-  environment.etc."ipsec-gateway/ca.crt".source = config.sops.secrets."ipsec-ca-cert".path;
+  environment.etc."ipsec-gateway/ca.crt".source = config.sops.secrets."ipsec_ca_cert".path;
 
   # === Keycloak Identity Server ===
   inckmann.identity.keycloak = {
     enable = true;
     hostname = "auth.inckmann.de";
     localHttpPort = 8081;
-    database.passwordFile = config.sops.secrets."keycloak-db-password".path;
+    database.passwordFile = config.sops.secrets."keycloak_db_password".path;
   };
 
   # === Exit Node Configuration ===
@@ -244,19 +244,19 @@ in
       keycloak_db_password = {
         sopsFile = self + /secrets/vps2-de-berlin/keycloak.yaml;
       };
-      wireguard_gateway_private_key = {
+      wireguard_private_key = {
         sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;
       };
       wireguard_gateway_preshared_key = {
         sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;
       };
-      ipsec_gateway_server_key = {
+      ipsec_server_key = {
         sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
       };
-      ipsec_gateway_server_cert = {
+      ipsec_server_cert = {
         sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
       };
-      ipsec_gateway_ca_cert = {
+      ipsec_ca_cert = {
         sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
       };
     };
