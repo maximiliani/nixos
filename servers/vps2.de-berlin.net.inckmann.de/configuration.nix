@@ -224,6 +224,7 @@ in
     secrets = {
       headscale_oidc_client_secret = {
         sopsFile = self + /secrets/vps2-de-berlin/headscale.yaml;
+        owner = "headscale";
       };
       keycloak_db_password = {
         sopsFile = self + /secrets/vps2-de-berlin/keycloak.yaml;
