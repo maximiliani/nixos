@@ -61,16 +61,16 @@ in
         username = "keycloak";
         passwordFile = cfg.database.passwordFile;
       };
-      # settings = recursiveUpdate {
-      #   hostname = cfg.hostname;
-      #   hostname-strict = true;
-      #   http-enabled = true;
-      #   http-host = "127.0.0.1";
-      #   http-port = cfg.localHttpPort;
-      #   proxy-headers = "xforwarded";
-      #   health-enabled = true;
-      #   metrics-enabled = true;
-      # } cfg.settings;
+      settings = recursiveUpdate {
+        hostname = cfg.hostname;
+        hostname-strict = true;
+        http-enabled = true;
+        http-host = "127.0.0.1";
+        http-port = cfg.localHttpPort;
+        proxy-headers = "xforwarded";
+        health-enabled = true;
+        metrics-enabled = true;
+      } cfg.settings;
     };
 
     # # Create PostgreSQL database and user for Keycloak
