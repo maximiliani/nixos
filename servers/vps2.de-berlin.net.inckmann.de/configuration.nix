@@ -228,6 +228,7 @@ in
       };
       keycloak_db_password = {
         sopsFile = self + /secrets/vps2-de-berlin/keycloak.yaml;
+	owner = "postgres";
       };
       wireguard_private_key = {
         sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;

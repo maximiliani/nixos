@@ -10,7 +10,7 @@ in
 
     hostname = mkOption {
       type = types.str;
-      default = "auth.inckmann.de";
+      example = "auth.inckmann.de";
       description = "Public hostname for Keycloak.";
     };
 
@@ -35,7 +35,7 @@ in
     database = {
       passwordFile = mkOption {
         type = types.str;
-        default = "/var/lib/inckmann-vpn-bootstrap/secrets/keycloak-db-password";
+        default = "/run/secrets/keycloak-db-password";
         description = "Database password file path.";
       };
     };
@@ -51,40 +51,24 @@ in
 
     services.keycloak = {
       enable = true;
-      # realmFiles = cfg.realmFiles;
       database = {
         type = "postgresql";
         createLocally = true;
-        # createLocally = false;
-        # database.host = "/run/postgresql";
-        # name = "keycloak";
-        username = "keycloak";
         passwordFile = cfg.database.passwordFile;
       };
+      initialAdminPassword = "HinzKunz";
       settings = recursiveUpdate {
         hostname = cfg.hostname;
-        hostname-strict = true;
+#        hostname-strict = false;
+#	proxy-protocol-enabled = true;
+#	hostname-backchannel-dynamic = true;
         http-enabled = true;
-        http-host = "127.0.0.1";
+#        http-host = "127.0.0.1";
         http-port = cfg.localHttpPort;
-        proxy-headers = "xforwarded";
+#        proxy-headers = "xforwarded";
         health-enabled = true;
         metrics-enabled = true;
       } cfg.settings;
     };
-
-    # # Create PostgreSQL database and user for Keycloak
-    # services.postgresql = {
-    #   enable = mkIf cfg.enable true;
-    #   package = mkDefault pkgs.postgresql_15;
-    #   ensureDatabases = [ "keycloak" ];
-    #   ensureUsers = [
-    #     {
-    #       name = "keycloak";
-    #       ensureDBOwnership = true;
-    #       isSuperuser = false;
-    #     }
-    #   ];
-    # };
   };
 }
