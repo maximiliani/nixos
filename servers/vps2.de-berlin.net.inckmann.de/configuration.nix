@@ -40,13 +40,6 @@ in
     hostName = "vps2-de-berlin";
     enableIPv6 = true;
 
-    interfaces.eth0 = {
-      ipv4.addresses = [{ address = publicIpv4; prefixLength = 32; }];
-      ipv6.addresses = [
-        { address = publicIpv6Address; prefixLength = 80; }
-      ];
-    };
-
     nameservers = [ "1.1.1.1" "1.0.0.1" "2606:4700:4700::1111" "2606:4700:4700::1001" ];
   };
 
