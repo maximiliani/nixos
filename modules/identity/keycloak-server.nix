@@ -52,6 +52,8 @@ in
       };
       initialAdminPassword = "HinzKunz";
       settings = recursiveUpdate {
+        bootstrap-admin-username = "admin";
+        bootstrap-admin-password = "HinzKunz";
         hostname = cfg.hostname;
         hostname-strict = false;
         http-enabled = true;
