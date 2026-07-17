@@ -47,15 +47,6 @@ in
       ];
     };
 
-    defaultGateway = {
-      address = "87.106.81.1";
-      interface = "eth0";
-    };
-    defaultGateway6 = {
-      address = publicIpv6Address;
-      interface = "eth0";
-    };
-
     nameservers = [ "1.1.1.1" "1.0.0.1" "2606:4700:4700::1111" "2606:4700:4700::1001" ];
   };
 
