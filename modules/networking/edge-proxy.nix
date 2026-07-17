@@ -88,10 +88,7 @@ in
             locations."/" = {
               proxyPass = "${target.upstreamScheme}://${target.upstream}";
               proxyWebsockets = target.proxyWebsockets;
-              proxy_set_header = X-Forwarded-For $proxy_protocol_addr;
-              proxy_set_header = X-Forwarded-Proto $scheme;
-              proxy_set_header = X-Forwarded-Host $host;
-              proxy_set_header = X-Forwarded-Port 8888;
+              recommendedProxySettings = true;
             };
           }
           // optionalAttrs (target.useACMEHost != null) {
