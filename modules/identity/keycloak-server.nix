@@ -20,12 +20,6 @@ in
       description = "Local HTTP port for reverse-proxy ingress.";
     };
 
-    realmFiles = mkOption {
-      type = types.listOf types.path;
-      default = [ ];
-      description = "Realm JSON files imported by Keycloak on startup.";
-    };
-
     settings = mkOption {
       type = types.attrs;
       default = { };
@@ -59,13 +53,11 @@ in
       initialAdminPassword = "HinzKunz";
       settings = recursiveUpdate {
         hostname = cfg.hostname;
-#        hostname-strict = false;
-#	proxy-protocol-enabled = true;
-#	hostname-backchannel-dynamic = true;
+        hostname-strict = false;
         http-enabled = true;
-#        http-host = "127.0.0.1";
+        http-host = "127.0.0.1";
         http-port = cfg.localHttpPort;
-#        proxy-headers = "xforwarded";
+        proxy-headers = "xforwarded";
         health-enabled = true;
         metrics-enabled = true;
       } cfg.settings;
