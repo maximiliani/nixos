@@ -2,6 +2,7 @@
   config,
   lib,
   inputs,
+  pkgs,
   ...
 }:
 let
@@ -95,6 +96,10 @@ in
         message = "config.local.tailscale.routes seams to contain a value which is not an ip addr with CIDR. Namely: ${builtins.concatStringsSep ", " (invalidIpCidrs cfg.routes)}";
       }
     ];
+    environment.systemPackages = with pkgs; [
+      tailscale
+    ];
+
     sops = {
       secrets."${cfg.user}-auth-key".sopsFile = inputs.self + /secrets/tailscale.yaml;
     };
