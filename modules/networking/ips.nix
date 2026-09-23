@@ -38,6 +38,10 @@ in
     );
     description = "Configuration for local IPs, including servers";
   };
+  options.myModules.internet-nameservers = mkOption {
+    type = types.listOf types.str;
+    description = "List of IPv4 and/or IPv6 addresses to nameservers in the internet";
+  };
 
   config = {
     myModules.ips = rec {
@@ -70,19 +74,20 @@ in
       tailscale-exit-vps2-de-berlin = {
         ipv4.address = "10.0.0.8";
         ipv6.address = "fc00::8";
-      }
+      };
     };
+
+    myModules.internet-nameservers = [
+      # Cloudflare
+      "1.1.1.1"
+      "1.0.0.1"
+      "2606:4700:4700::1111"
+      "2606:4700:4700::1001"
+      # Quad9
+      "9.9.9.9"
+      "149.112.112.112"
+      "2620:fe::fe"
+      "2620:fe::9"
+    ];
   };
-  myModules.internet-nameservers = [
-    # Cloudflare
-    "1.1.1.1"
-    "1.0.0.1"
-    "2606:4700:4700::1111"
-    "2606:4700:4700::1001"
-    # Quad9
-    "9.9.9.9"
-    "149.112.112.112"
-    "2620:fe::fe"
-    "2620:fe::9"
-  ];
 }
