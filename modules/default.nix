@@ -3,6 +3,7 @@
   pkgs,
   inputs,
   lib,
+  sops,
   ...
 }:
 let
@@ -16,6 +17,7 @@ in
     ./autoUpgrade.nix
     ./networking
   ];
+
   config = {
     system.nixos.label = lib.mkIf (config.image ? baseName) config.networking.hostName;
 

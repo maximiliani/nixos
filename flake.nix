@@ -16,6 +16,7 @@
           system = "x86_64-linux";
           specialArgs = {
               inherit inputs self;
+              inherit (inputs.sops-nix.nixosModules) sops;
           };
           modules = [
             { nixpkgs.config.allowUnfree = true; }
@@ -29,6 +30,7 @@
           system = "x86_64-linux";
           specialArgs = {
               inherit inputs self;
+              inherit (inputs.sops-nix.nixosModules) sops;
           };
           modules = [
             { nixpkgs.config.allowUnfree = true; }
@@ -42,6 +44,7 @@
           system = "x86_64-linux";
           specialArgs = {
               inherit inputs self;
+              inherit (inputs.sops-nix.nixosModules) sops;
           };
           modules = [
             { nixpkgs.config.allowUnfree = true; }
