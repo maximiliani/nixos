@@ -63,10 +63,7 @@ updateTailscale() {
 
     echo "Tunnel ready at ${local_sock}"
 
-    cat > /tmp/headscale.config << EOF
-    disable_check_updates: true
-    unix_socket: /tmp/headscale-tunnel.sock
-    EOF
+    printf "disable_check_updates: true\nunix_socket: /tmp/headscale-tunnel.sock" > /tmp/headscale.config
 
     # Set configfile
     HEADSCALE_CONFIG=/tmp/headscale.config
