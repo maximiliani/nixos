@@ -64,11 +64,11 @@
       };
       admin_password = {
         sopsFile = self + /secrets/vps2-de-berlin/kanidm.yaml;
-        owner = "kanidm"
+        owner = "kanidm";
       };
       idm_admin_password = {
         sopsFile = self + /secrets/vps2-de-berlin/kanidm.yaml;
-        owner = "kanidm"
+        owner = "kanidm";
       };
       # wireguard_private_key = {
       #   sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;
