@@ -1,54 +1,55 @@
 {
-inputs = {
-    nixpkgs.url = "github:NixOs/nixpkgs/nixos-26.05";
-    sops-nix = {
-        url = "github:Mic92/sops-nix";
-        inputs.nixpkgs.follows = "nixpkgs";
-    };
-    disko = {
-        url = "github:nix-community/disko";
-        inputs.nixpkgs.follows = "nixpkgs";
-    };
-};
-outputs = {self, nixpkgs, ...}@inputs: {
-   nixosConfigurations = {
-      vps2-de-berlin = nixpkgs.lib.nixosSystem rec {
-         system = "x86_64-linux";
-         specialArgs = {
-            inherit inputs self;
-         };
-         modules = [
-           { nixpkgs.config.allowUnfree = true; }
-           inputs.sops-nix.nixosModules.sops
-           inputs.disko.nixosModules.disko
-           ./servers/vps2.de-berlin.net.inckmann.de
-         ];
+  inputs = {
+      nixpkgs.url = "github:NixOs/nixpkgs/nixos-26.05";
+      sops-nix = {
+          url = "github:Mic92/sops-nix";
+          inputs.nixpkgs.follows = "nixpkgs";
       };
-
-      t420 = nixpkgs.lib.nixosSystem rec {
-        system = "x86_64-linux";
-        specialArgs = {
-            inherit inputs self;
+      disko = {
+          url = "github:nix-community/disko";
+          inputs.nixpkgs.follows = "nixpkgs";
+      };
+  };
+  outputs = {self, nixpkgs, ...}@inputs: {
+    nixosConfigurations = {
+        vps2-de-berlin = nixpkgs.lib.nixosSystem rec {
+          system = "x86_64-linux";
+          specialArgs = {
+              inherit inputs self;
+          };
+          modules = [
+            { nixpkgs.config.allowUnfree = true; }
+            inputs.sops-nix.nixosModules.sops
+            inputs.disko.nixosModules.disko
+            ./servers/vps2.de-berlin.net.inckmann.de
+          ];
         };
-        modules = [
-          { nixpkgs.config.allowUnfree = true; }
-          inputs.sops-nix.nixosModules.sops
-          ./t420
-          ./nix-config.nix
-        ];
-      };
 
-      mbp-2016 = nixpkgs.lib.nixosSystem rec {
-        system = "x86_64-linux";
-        specialArgs = {
-            inherit inputs self;
+        t420 = nixpkgs.lib.nixosSystem rec {
+          system = "x86_64-linux";
+          specialArgs = {
+              inherit inputs self;
+          };
+          modules = [
+            { nixpkgs.config.allowUnfree = true; }
+            inputs.sops-nix.nixosModules.sops
+            ./t420
+            ./nix-config.nix
+          ];
         };
-        modules = [
-          { nixpkgs.config.allowUnfree = true; }
-          ./nix-config.nix
-          ./mbp-2016
-          inputs.sops-nix.nixosModules.sops
-        ];
-      };
-   };
+
+        mbp-2016 = nixpkgs.lib.nixosSystem rec {
+          system = "x86_64-linux";
+          specialArgs = {
+              inherit inputs self;
+          };
+          modules = [
+            { nixpkgs.config.allowUnfree = true; }
+            ./nix-config.nix
+            ./mbp-2016
+            inputs.sops-nix.nixosModules.sops
+          ];
+        };
+    };
+  };
 };
