@@ -1,187 +1,23 @@
-{ config, modulesPath, lib, pkgs, inputs, self, fleetNode, ... }:
-let
-  # Public networking from IONOS
-  publicIpv4 = "87.106.81.219";
-  publicIpv6Address = "2a01:239:469:4c00::1";
-  publicIpv6Subnet = "2a01:239:469:4c00::/80";
-
-  # VPN addressing - local ULA for internal networks
-  vpnBaseIpv4 = "10.66.0.1";
-  vpnBaseIpv6 = "fd66:6600::1";
-
-  # Service addresses
-  headscaleLocalIpv4 = "100.64.0.1";
-  headscaleLocalIpv6 = "fd66:6601::1";
-  headscalePublicIpv6 = "2a01:239:469:4c00::2";
-
-  wireguardLocalIpv4 = "10.66.200.1";
-  wireguardLocalIpv6 = "fd66:6602::1";
-  wireguardPublicIpv6 = "2a01:239:469:4c00::3";
-
-  ipsecPoolStartIpv4 = "10.66.210.1";
-  ipsecPoolStartIpv6 = "2a01:239:469:4c00::10";
-
-  stateDir = "/var/lib/inckmann-vpn-bootstrap";
-  secretsDir = "${stateDir}/secrets";
-in
+{ config, modulesPath, lib, pkgs, inputs, self, ... }:
 {
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
     (modulesPath + "/profiles/qemu-guest.nix")
     ./disk-config.nix
-    ../../modules/vpn
-    ../../modules/identity
-    ../../modules/networking
-    ./bootstrap.nix
   ];
 
   # === Network Configuration ===
   networking = {
     hostName = "vps2-de-berlin";
+    domain = "net.inckmann.de";
     enableIPv6 = true;
-
-    nameservers = [ "1.1.1.1" "1.0.0.1" "2606:4700:4700::1111" "2606:4700:4700::1001" ];
-  };
-
-  # === Headscale Server ===
-  services.headscale = {
-    enable = true;
-    port = 443;
-    address = "[::]";
-
-    settings = {
-      server_url = "https://vpn.net.inckmann.de";
-      listen_addr = "0.0.0.0:8080";
-      metrics_listen_addr = "127.0.0.1:9090";
-
-      prefixes = {
-        v4 = "100.64.0.0/10";
-        v6 = "fd66:6601::/64";
-      };
-
-      dns = {
-        override_local_dns = true;
-        magic_dns = true;
-        base_domain = "headscale.inckmann.de";
-        nameservers = {
-          global = [ "1.1.1.1" "2606:4700:4700::1111" ];
-        };
-      };
-
-      oidc = {
-        only_start_if_oidc_is_available = true;
-        issuer = "https://auth.inckmann.de/realms/inckmann";
-        client_id = "headscale";
-        client_secret_path = config.sops.secrets."headscale_oidc_client_secret".path;
-        scope = [ "openid" "profile" "email" "groups" ];
-        allowed_groups = [ "/admins" "/family" "/friends" ];
-      };
-
-      policy.path = ./headscale_acl.hujson;
-      tls_letsencrypt_hostname = "vpn.net.inckmann.de";
-    };
-  };
-
-  # === WireGuard Gateway ===
-  networking.wg-quick.interfaces.wg-gateway = {
-    address = [
-      "${wireguardLocalIpv4}/24"
-      "${wireguardLocalIpv6}/64"
-      "${wireguardPublicIpv6}/128"
-    ];
-    listenPort = 51820;
-    privateKeyFile = config.sops.secrets."wireguard_private_key".path;
-    peers = [
-      # Add WireGuard peers here:
-      # {
-      #   publicKey = "...";
-      #   allowedIPs = [ "10.66.200.2/32" "fd66:6602::2/128" ];
-      #   presharedKeyFile = config.sops.secrets."wireguard-psk".path;
-      #   persistentKeepalive = 25;
-      # }
-    ];
-  };
-
-  # === IPSec Gateway ===
-  services.strongswan-swanctl = {
-    enable = true;
-    swanctl = {
-      connections."ikev2-eap" = {
-        version = 2;
-        local_addrs = [ "%any" ];
-        remote_addrs = [ "%any" ];
-        pools = [ "ikev2-pool" ];
-        proposals = [ "aes256-sha256-modp2048" ];
-
-        local.main = {
-          auth = "pubkey";
-          id = "vpn.net.inckmann.de";
-          certs = [ config.sops.secrets."ipsec_server_cert".path ];
-        };
-
-        remote.main = {
-          auth = "eap-mschapv2";
-          eap_id = "%any";
-        };
-
-        children."net-all" = {
-          local_ts = [ "0.0.0.0/0" "::/0" ];  # Full tunnel for exit node
-          esp_proposals = [ "aes256-sha256" ];
-          dpd_action = "restart";
-        };
-      };
-
-      pools."ikev2-pool" = {
-        addrs = "10.66.210.0/24";
-        dns = [ "1.1.1.1" "2606:4700:4700::1111" ];
-      };
-
-      secrets.eap = {
-        # Add IPSec EAP users here:
-        # username = { id.main = "username"; secret = "password"; };
-      };
-    };
-  };
-
-  environment.etc."ipsec-gateway/ca.crt".source = config.sops.secrets."ipsec_ca_cert".path;
-
-  # === Keycloak Identity Server ===
-  inckmann.identity.keycloak = {
-    enable = true;
-    hostname = "auth.inckmann.de";
-    localHttpPort = 8081;
-    database.passwordFile = config.sops.secrets."keycloak_db_password".path;
-  };
-
-  # === Exit Node Configuration ===
-  inckmann.vpn.exitNode = {
-    enable = true;
-    advertiseTags = [ "tag:vpn-gateway" ];
-    advertiseRoutes = [
-      "10.66.0.0/16"
-      "fd66:6600::/64"
-      "10.66.200.0/24"
-      "fd66:6602::/64"
-      "10.66.210.0/24"
-      "fd66:6603::/64"
-    ];
-  };
-
-  # === Firewall Configuration ===
-  networking.firewall = {
-    allowPing = true;
-    allowedTCPPorts = [ 80 443 ];  # ACME + HTTPS for Headscale
-    allowedUDPPorts = [ 500 4500 51820 ];  # IPSec NAT-T/IKE + WireGuard
-    trustedInterfaces = [ "tailscale0" "wg-gateway" ];
-  };
-
-  # === Edge Proxy ===
-  inckmann.networking.edgeProxy = {
-    enable = true;
-    targets = {
-      "newsticker.gsm.inckmann.de".upstream = "10.66.0.20:8080";
-      "db.newsticker.gsm.inckmann.de".upstream = "10.66.0.21:54321";
-      "auth.inckmann.de".upstream = "127.0.0.1:8081";
+    nameservers = [ "1.1.1.1" "1.0.0.1" "9.9.9.9" "149.112.112.112" "2606:4700:4700::1111" "2606:4700:4700::1001" "2620:fe::fe" "2620:fe::9"];
+    # === Firewall Configuration ===
+    firewall = {
+      allowPing = true;
+      allowedTCPPorts = [ 80 443 ];  # ACME + HTTPS for Headscale
+      allowedUDPPorts = [ 500 4500 51820 ];  # IPSec NAT-T/IKE + WireGuard
+      # trustedInterfaces = [ "tailscale0" "wg-gateway" ];
     };
   };
 
@@ -216,7 +52,7 @@ in
 
   # === Sops ===
   sops = {
-    defaultSopsFile = self + /secrets/t420/default.yaml;
+    defaultSopsFile = self + /secrets/vps2-de-berlin/default.yaml;
     age = {
      keyFile = "/var/lib/sops-nix/key.txt";
      generateKey = true;
@@ -226,25 +62,29 @@ in
         sopsFile = self + /secrets/vps2-de-berlin/headscale.yaml;
         owner = "headscale";
       };
-      keycloak_db_password = {
-        sopsFile = self + /secrets/vps2-de-berlin/keycloak.yaml;
-        owner = "postgres";
+      admin_password = {
+        sopsFile = self + /secrets/vps2-de-berlin/kanidm.yaml;
+        owner = "kanidm"
       };
-      wireguard_private_key = {
-        sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;
+      idm_admin_password = {
+        sopsFile = self + /secrets/vps2-de-berlin/kanidm.yaml;
+        owner = "kanidm"
       };
-      wireguard_gateway_preshared_key = {
-        sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;
-      };
-      ipsec_server_key = {
-        sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
-      };
-      ipsec_server_cert = {
-        sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
-      };
-      ipsec_ca_cert = {
-        sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
-      };
+      # wireguard_private_key = {
+      #   sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;
+      # };
+      # wireguard_gateway_preshared_key = {
+      #   sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;
+      # };
+      # ipsec_server_key = {
+      #   sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
+      # };
+      # ipsec_server_cert = {
+      #   sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
+      # };
+      # ipsec_ca_cert = {
+      #   sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
+      # };
     };
   };
 

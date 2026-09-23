@@ -10,71 +10,45 @@ inputs = {
         inputs.nixpkgs.follows = "nixpkgs";
     };
 };
-outputs = {self, nixpkgs, ...}@inputs:
-let
-  fleetInventory = import ./inventory/fleet.nix;
-
-  mkSystem = { system, modules, fleetNode ? null }:
-    nixpkgs.lib.nixosSystem {
-      inherit system modules;
-      specialArgs = {
-        inherit inputs self fleetInventory fleetNode;
-      };
-    };
-
-  mkFleetSystem = nodeName: { system, modules }:
-    let
-      fleetNode = fleetInventory.getNode nodeName;
-    in
-    mkSystem {
-      inherit system fleetNode;
-      modules = modules fleetNode;
-    };
-
-  fleetHosts = {
-    vps2-de-berlin = {
-      system = "x86_64-linux";
-      modules = fleetNode: [
-        { nixpkgs.config.allowUnfree = true; }
-        inputs.sops-nix.nixosModules.sops
-        inputs.disko.nixosModules.disko
-        ./${fleetNode.hostConfig}
-        ./servers/vps2.de-berlin.net.inckmann.de/hardware-configuration.nix
-      ];
-    };
-
-    mbp-2016 = {
-      system = "x86_64-linux";
-      modules = fleetNode: [
-        { nixpkgs.config.allowUnfree = true; }
-        ./nix-config.nix
-        ./${fleetNode.hostConfig}
-        ./mbp-2016/hardware-configuration.nix
-        inputs.sops-nix.nixosModules.sops
-      ];
-    };
-  };
-in {
-   nixosModules = {
-     vpn = import ./modules/vpn;
-     identity = import ./modules/identity;
-     networking = import ./modules/networking;
-   };
-   lib = {
-     inherit fleetInventory;
-   };
-   nixosConfigurations =
-     (builtins.mapAttrs mkFleetSystem fleetHosts)
-     // {
-       t420 = mkSystem {
+outputs = {self, nixpkgs, ...}@inputs: {
+   nixosConfigurations = {
+      vps2-de-berlin = nixpkgs.lib.nixosSystem rec {
          system = "x86_64-linux";
+         specialArgs = {
+            inherit inputs self;
+         };
          modules = [
            { nixpkgs.config.allowUnfree = true; }
-           ./t420/configuration.nix
-           ./nix-config.nix
            inputs.sops-nix.nixosModules.sops
+           inputs.disko.nixosModules.disko
+           ./servers/vps2.de-berlin.net.inckmann.de
          ];
-       };
-     };
+      };
+
+      t420 = nixpkgs.lib.nixosSystem rec {
+        system = "x86_64-linux";
+        specialArgs = {
+            inherit inputs self;
+        };
+        modules = [
+          { nixpkgs.config.allowUnfree = true; }
+          inputs.sops-nix.nixosModules.sops
+          ./t420
+          ./nix-config.nix
+        ];
+      };
+
+      mbp-2016 = nixpkgs.lib.nixosSystem rec {
+        system = "x86_64-linux";
+        specialArgs = {
+            inherit inputs self;
+        };
+        modules = [
+          { nixpkgs.config.allowUnfree = true; }
+          ./nix-config.nix
+          ./mbp-2016
+          inputs.sops-nix.nixosModules.sops
+        ];
+      };
+   };
 };
-}

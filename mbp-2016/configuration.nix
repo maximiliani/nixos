@@ -13,7 +13,7 @@
 } @ args:
 {
   imports = [
-    ../modules/vpn
+    ../modules
   ];
 
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -113,12 +113,6 @@
   ];
 
   services.openssh.enable = true;
-
-  inckmann.vpn.managedClient = {
-    enable = true;
-    loginServer = "https://vpn.net.inckmann.de";
-    owner = "Maximilian";
-  };
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

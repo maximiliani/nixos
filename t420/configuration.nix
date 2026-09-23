@@ -8,7 +8,6 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      ../modules/vpn/managed-client.nix
     ];
 
   # Bootloader.
@@ -120,13 +119,6 @@
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
-
-  # === Headscale/Tailscale Client ===
-  inckmann.vpn.managedClient = {
-    enable = true;
-    tags = [ "tag:client" ];
-    acceptRoutes = true;
-  };
 
   # Sops
   sops = {

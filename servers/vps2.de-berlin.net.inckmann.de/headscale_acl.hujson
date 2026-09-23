@@ -1,58 +1,77 @@
 {
   "groups": {
-    "group:admins": [ "maximilian@inckmann.de" ],
-    "group:fleet-nodes": [
-      "vps2-de-berlin@inckmann.de",
-      "t420@inckmann.de",
-      "mbp-2016@inckmann.de"
-    ]
+    "group:admin": [ "maximilian@auth.inckmann.de" ],
+    "group:user": [ "maximilian@auth.inckmann.de", raoul@auth.inckmann.de ]
   },
   "tagOwners": {
-    "tag:vpn-gateway": [ "group:admins" ],
-    "tag:client": [ "group:admins" ],
-    "tag:service": [ "group:admins" ]
+    "tag:server": [ "group:admin" ],
+    "tag:home": [ "group:admin" ],
+    "tag:extern": [ "group:admin" ],
   },
   "autoApprovers": {
     "routes": {
-      "10.66.0.0/16": [ "tag:vpn-gateway" ],
-      "fd66:6600::/64": [ "tag:vpn-gateway" ],
-      "192.168.0.0/16": [ "tag:vpn-gateway" ]
+      "10.0.0.0/8": [ "tag:server" ],
+      "fd00::/64": [ "tag:server" ],
+      "192.168.0.0/16" [ "tag:home" ],
     },
-    "exitNode": [ "tag:vpn-gateway" ]
+    "exitNode": [ "tag:server" ]
   },
   "acls": [
     {
-      "action": "accept",
-      "src": [ "group:admins" ],
-      "dst": [ "tag:vpn-gateway:*" ]
+        "action": "accept",
+        "src": [ "group:user" ],
+        "dst": [ "tag:extern:22" ],
     },
     {
-      "action": "accept",
-      "src": [ "tag:client" ],
-      "dst": [ "tag:service:*" ]
+        "action": "accept",
+        "src": [ "group:admin" ],
+        "dst": [ "tag:server:*" ]
+    },
+    // Allow users to access their own devices using autogroup:self (see below for more details about performance impact)
+    // autogroups are only from 0.27.0 supported works only above nixos 25.11
+    {
+        "action": "accept",
+        "src": ["autogroup:member"],
+        "dst": ["autogroup:self:*"]
     },
     {
-      "action": "accept",
-      "src": [ "*" ],
-      "dst": [ "autogroup:internet:*" ]
+        "action": "accept",
+        "src": ["*"],
+        "dst": ["autogroup:internet:*"]
     },
     {
-      "action": "accept",
-      "src": [ "autogroup:self" ],
-      "dst": [ "autogroup:self:*" ]
+        "action": "accept",
+        "src": ["*"],
+        "dst": [ "192.168.0.0/16:*" ]
     },
-    {
-      "action": "accept",
-      "src": [ "autogroup:member" ],
-      "dst": [ "10.66.0.0/16:*", "fd66:6600::/64:*" ]
-    }
   ],
   "ssh": [
     {
       "action": "accept",
-      "src": [ "group:admins" ],
-      "dst": [ "tag:vpn-gateway" ],
-      "users": [ "root" ]
+      "dst": ["autogroup:self"],
+      "src": ["autogroup:member"],
+      "users": ["autogroup:nonroot"]
+    },
+    {
+      "action": "check",
+      "dst": ["autogroup:self"],
+      "src": ["autogroup:member"],
+      "users": ["root"],
+      "checkPeriod": "20m"
+    },
+    {
+        "action": "check",
+        "dst": [ "tag:server" ],
+        "src": [ "group:admin" ],
+        "users": [ "root" ],
+        "checkPeriod": "20m"
+    },
+    {
+        "action": "check",
+        "dst": [ "tag:extern" ],
+        "src": [ "group:user" ],
+        "users": [ "autogroup:nonroot" ],
+        "checkPeriod": "2h"
     }
   ]
 }

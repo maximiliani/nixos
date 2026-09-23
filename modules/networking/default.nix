@@ -1,5 +1,6 @@
 {
   imports = [
-    ./edge-proxy.nix
+    ./ips.nix
+    ./tailscale.nix
   ];
 }
