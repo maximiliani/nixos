@@ -39,10 +39,10 @@ in
 
   console.keyMap = "de";
 
-  boot.supportedFilesystems = [
-    "zfs"
-    "lvm"
-  ];
+  # boot.supportedFilesystems = [
+  #   "zfs"
+  #   "lvm"
+  # ];
 
   boot.tmp.cleanOnBoot = true;
 
