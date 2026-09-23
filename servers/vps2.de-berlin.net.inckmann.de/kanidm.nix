@@ -44,7 +44,7 @@ in
     uid = 999;
   };
 
-  environment.systemPackages = [ config.services.kanidm.package ];
+  # environment.systemPackages = [ config.services.kanidm.package ];
 
   services.kanidm = {
     package = pkgs.kanidmWithSecretProvisioning_1_11;
