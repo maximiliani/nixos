@@ -63,6 +63,6 @@ in
     };
 
     networking.firewall.allowedTCPPorts = optionals cfg.openFirewall [ cfg.port ];
-    environment.systemPackages = [ cfg.package ];
+    # environment.systemPackages = [ cfg.package ];
   };
 }
