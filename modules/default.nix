@@ -14,7 +14,7 @@ in
   imports = [
     ./sops.nix
     ./localization.nix
-    ./autoUpgrade.nix
+    ./autoupgrade.nix
     ./networking
   ];
 
