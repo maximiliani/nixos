@@ -4,12 +4,17 @@
   inputs,
   lib,
   ...
-}: {
+}:
+let
+  base = "/etc/nixpkgs/channels";
+  nixpkgsPath = "${base}/nixpkgs";
+in
+{
   imports = [
     ./sops.nix
     ./localization.nix
     ./autoUpgrade.nix
-    ./networking/ips.nix
+    ./networking
   ];
   config = {
     system.nixos.label = lib.mkIf (config.image ? baseName) config.networking.hostName;
@@ -38,10 +43,6 @@
       nameservers = config.myModules.internet-nameservers;
       firewall.allowPing = true;
     };
-
-    # Enable CUPS for printing
-    services.printing.enable = full;
-    services.printing.drivers = [ pkgs.gutenprint ];
 
     users.defaultUserShell = pkgs.zsh;
     environment.shells = with pkgs; [ zsh ];
