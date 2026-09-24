@@ -3,7 +3,6 @@
   pkgs,
   inputs,
   lib,
-  sops,
   ...
 }:
 let
