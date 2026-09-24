@@ -24,7 +24,7 @@ in
   };
 
   sops = {
-    defaultSopsFile = ../secrets/vps2-de-berlin/kanidm.yaml;
+    defaultSopsFile = ../../secrets/vps2-de-berlin/kanidm.yaml;
     age = {
       keyFile = "/var/lib/sops-nix/key.txt";
       generateKey = true; # generate key above if it does not exist yet (has to be added manually to .sops.yaml)
@@ -35,7 +35,7 @@ in
       idm_admin_password.owner = "kanidm";
       headscale = {
         owner = "kanidm";
-        sopsFile = ../secrets/vps2-de-berlin/headscale.yaml;
+        sopsFile = ../../secrets/vps2-de-berlin/headscale.yaml;
       };
     };
   };
