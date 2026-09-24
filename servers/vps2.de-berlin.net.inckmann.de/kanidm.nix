@@ -23,20 +23,18 @@ in
     hostName = "kanidm";
   };
 
-  sops = {
-    defaultSopsFile = ../../secrets/vps2-de-berlin/kanidm.yaml;
-    age = {
-      keyFile = "/var/lib/sops-nix/key.txt";
-      generateKey = true; # generate key above if it does not exist yet (has to be added manually to .sops.yaml)
-      sshKeyPaths = [ ];
+  sops.secrets = {
+    admin_password = {
+      owner = "kanidm";
+      sopsFile = ../../secrets/vps2-de-berlin/kanidm.yaml;
     };
-    secrets = {
-      admin_password.owner = "kanidm";
-      idm_admin_password.owner = "kanidm";
-      headscale = {
-        owner = "kanidm";
-        sopsFile = ../../secrets/vps2-de-berlin/headscale.yaml;
-      };
+    idm_admin_password.owner = {
+      owner = "kanidm";
+      sopsFile = ../../secrets/vps2-de-berlin/kanidm.yaml;
+    };
+    headscale = {
+      owner = "kanidm";
+      sopsFile = ../../secrets/vps2-de-berlin/headscale.yaml;
     };
   };
 
@@ -47,7 +45,7 @@ in
   # environment.systemPackages = [ config.services.kanidm.package ];
 
   services.kanidm = {
-    package = pkgs.kanidmWithSecretProvisioning_1_11;
+    package = pkgs.kanidmWithSecretProvisioning_1_10;
     server = {
       enable = true;
       settings = {
