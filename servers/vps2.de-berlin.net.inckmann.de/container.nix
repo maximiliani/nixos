@@ -4,7 +4,6 @@
   lib,
   pkgs,
   sops,
-  stable,
   ...
 }:
 let
@@ -13,7 +12,7 @@ let
     lib.recursiveUpdate {
       autoStart = true;
       specialArgs = {
-        inherit inputs stable sops;
+        inherit inputs pkgs sops;
         secureboot = false;
       };
       privateNetwork = true;
