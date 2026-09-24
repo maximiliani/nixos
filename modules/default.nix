@@ -87,11 +87,11 @@ in
 
       ohMyZsh = {
         enable = true;
-        customPkgs = with pkgs; [
-          omz-nix-shell
-          omz-powerlevel10k
-          zsh-you-should-use
-        ];
+        # customPkgs = with pkgs; [
+        #   omz-nix-shell
+        #   omz-powerlevel10k
+        #   zsh-you-should-use
+        # ];
         plugins = [
           "git"
           "sudo"
