@@ -28,7 +28,7 @@ in
       owner = "kanidm";
       sopsFile = ../../secrets/vps2-de-berlin/kanidm.yaml;
     };
-    idm_admin_password.owner = {
+    idm_admin_password = {
       owner = "kanidm";
       sopsFile = ../../secrets/vps2-de-berlin/kanidm.yaml;
     };
