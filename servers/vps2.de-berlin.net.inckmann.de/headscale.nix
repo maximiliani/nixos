@@ -41,12 +41,11 @@
       };
 
       oidc = {
-        # only_start_if_oidc_is_available = true;
-        issuer = "https://auth.inckmann.de/oauth2/openid/${client_id}";
         client_id = "headscale";
+        issuer = "https://auth.inckmann.de/oauth2/openid/${client_id}";
         client_secret_path = config.sops.secrets.headscale_oidc_client_secret.path;
-        scope = [ "openid" "profile" "email" "groups" ];
-        allowed_groups = ["/family" "/friends" ];
+        # scope = [ "openid" "profile" "email" "groups" ];
+        # allowed_groups = ["/family" "/friends" ];
         pkce.enabled = true;
       };
     };
