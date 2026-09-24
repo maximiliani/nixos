@@ -64,6 +64,7 @@ in
         tls_chain = "/var/lib/acme/auth.inckmann.de/fullchain.pem";
       };
     };
+
     provision = {
       enable = true;
       adminPasswordFile = secrets.admin_password.path;
@@ -89,26 +90,27 @@ in
           ];
         };
 
-      persons = {
-        raoul = {
-          displayName = "Raoul";
-          legalName = "Raoul Honermann";
-          mailAddresses = [ "raoul@honermann.info" ];
-          groups = [
-            "headscale"
-            "friends"
-          ];
-        };
+        persons = {
+          raoul = {
+            displayName = "Raoul";
+            legalName = "Raoul Honermann";
+            mailAddresses = [ "raoul@honermann.info" ];
+            groups = [
+              "headscale"
+              "friends"
+            ];
+          };
 
-        maximilian = {
-          displayName = "Maximilian";
-          legalName = "Maximilian Inckmann";
-          mailAddresses = [ "maximilian@inckmann.de" ];
-          groups = [
-            "family"
-            "friends"
-            "headscale"
-          ];
+          maximilian = {
+            displayName = "Maximilian";
+            legalName = "Maximilian Inckmann";
+            mailAddresses = [ "maximilian@inckmann.de" ];
+            groups = [
+              "family"
+              "friends"
+              "headscale"
+            ];
+          };
         };
       };
     };
