@@ -32,7 +32,7 @@
         v6 = "fd01:0001::/64";
       };
 
-      dns = {
+      dns = rec {
         override_local_dns = true;
         magic_dns = true;
         base_domain = "net.inckmann.de";
@@ -40,7 +40,7 @@
         nameservers.global = config.myModules.internet-nameservers;
       };
 
-      oidc = {
+      oidc = rec {
         client_id = "headscale";
         issuer = "https://auth.inckmann.de/oauth2/openid/${client_id}";
         client_secret_path = config.sops.secrets.headscale_oidc_client_secret.path;
