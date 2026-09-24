@@ -1,6 +1,6 @@
 { config, ... }:
 let
-  tailscale-exit = config.myModules.ips.tailscale-exit;
+  tailscale-exit-vps2-de-berlin = config.myModules.ips.tailscale-exit-vps2-de-berlin;
 in
 {
   imports = [
