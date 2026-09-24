@@ -89,28 +89,28 @@ in
             "email"
           ];
         };
+      };
 
-        persons = {
-          raoul = {
-            displayName = "Raoul";
-            legalName = "Raoul Honermann";
-            mailAddresses = [ "raoul@honermann.info" ];
-            groups = [
-              "headscale"
-              "friends"
-            ];
-          };
+      persons = {
+        raoul = {
+          displayName = "Raoul";
+          legalName = "Raoul Honermann";
+          mailAddresses = [ "raoul@honermann.info" ];
+          groups = [
+            "headscale"
+            "friends"
+          ];
+        };
 
-          maximilian = {
-            displayName = "Maximilian";
-            legalName = "Maximilian Inckmann";
-            mailAddresses = [ "maximilian@inckmann.de" ];
-            groups = [
-              "family"
-              "friends"
-              "headscale"
-            ];
-          };
+        maximilian = {
+          displayName = "Maximilian";
+          legalName = "Maximilian Inckmann";
+          mailAddresses = [ "maximilian@inckmann.de" ];
+          groups = [
+            "family"
+            "friends"
+            "headscale"
+          ];
         };
       };
     };
