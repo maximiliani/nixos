@@ -25,11 +25,13 @@ in
         "nix-command"
         "flakes"
       ];
+      registry.nixpkgs.flake = inputs.nixpkgs;
+      gc = {
+        automatic = true;
+        dates = "daily";
+        options = "--delete-older-than 14d";
+      };
       optimise.automatic = true;
-      registry = inputs.nixpkgs;
-      nixPath = [
-        "nixpkgs=${nixpkgsPath}"
-      ];
     };
 
     security.sudo.extraConfig = "Defaults env_keep += SSH_AUTH_SOCK";
