@@ -82,7 +82,7 @@ in
       localAddress6 = config.myModules.ips.headscale.ipv6.address;
     };
     tailscale-exit = mkContainer {
-      config = (import ./tailscale.nix);
+      config = (import ./tailscale-exit.nix);
       enableTun = true;
       bindMounts."/var/lib/tailscale/" = {
         isReadOnly = false;
