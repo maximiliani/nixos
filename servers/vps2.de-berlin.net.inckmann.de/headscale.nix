@@ -13,7 +13,7 @@
   };
 
   sops.secrets.headscale_oidc_client_secret = {
-      sopsFile = ../secrets/headscale.yaml;
+      sopsFile = ../secrets/vps2-de-berlin/headscale.yaml;
       owner = "headscale";
     };
 
