@@ -17,7 +17,7 @@ in
 {
   imports = [
     sops
-    ../../modules/
+    ../../modules
   ];
   networking = {
     hostName = "kanidm";
