@@ -32,7 +32,7 @@ in
       owner = "kanidm";
       sopsFile = ../../secrets/vps2-de-berlin/kanidm.yaml;
     };
-    headscale = {
+    headscale_oidc_client_secret = {
       owner = "kanidm";
       sopsFile = ../../secrets/vps2-de-berlin/headscale.yaml;
     };
@@ -80,7 +80,7 @@ in
           imageFile = logos.headscale;
           originLanding = "https://headscale.inckmann.de/oidc/callback";
           originUrl = [ "https://headscale.inckmann.de/oidc/callback" ];
-          basicSecretFile = secrets.headscale.path;
+          basicSecretFile = secrets.headscale_oidc_client_secret.path;
           scopeMaps.headscale = [
             "openid"
             "profile"
