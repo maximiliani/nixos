@@ -51,41 +51,34 @@
   ];
 
   # === Sops ===
-  sops = {
-    defaultSopsFile = self + /secrets/vps2-de-berlin/default.yaml;
-    age = {
-     keyFile = "/var/lib/sops-nix/key.txt";
-     generateKey = true;
+  sops.secrets = {
+    headscale_oidc_client_secret = {
+      sopsFile = self + /secrets/vps2-de-berlin/headscale.yaml;
+      owner = "headscale";
     };
-    secrets = {
-      headscale_oidc_client_secret = {
-        sopsFile = self + /secrets/vps2-de-berlin/headscale.yaml;
-        owner = "headscale";
-      };
-      admin_password = {
-        sopsFile = self + /secrets/vps2-de-berlin/kanidm.yaml;
-        owner = "kanidm";
-      };
-      idm_admin_password = {
-        sopsFile = self + /secrets/vps2-de-berlin/kanidm.yaml;
-        owner = "kanidm";
-      };
-      # wireguard_private_key = {
-      #   sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;
-      # };
-      # wireguard_gateway_preshared_key = {
-      #   sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;
-      # };
-      # ipsec_server_key = {
-      #   sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
-      # };
-      # ipsec_server_cert = {
-      #   sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
-      # };
-      # ipsec_ca_cert = {
-      #   sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
-      # };
+    admin_password = {
+      sopsFile = self + /secrets/vps2-de-berlin/kanidm.yaml;
+      owner = "kanidm";
     };
+    idm_admin_password = {
+      sopsFile = self + /secrets/vps2-de-berlin/kanidm.yaml;
+      owner = "kanidm";
+    };
+    # wireguard_private_key = {
+    #   sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;
+    # };
+    # wireguard_gateway_preshared_key = {
+    #   sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;
+    # };
+    # ipsec_server_key = {
+    #   sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
+    # };
+    # ipsec_server_cert = {
+    #   sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
+    # };
+    # ipsec_ca_cert = {
+    #   sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
+    # };
   };
 
   nix.settings = {
