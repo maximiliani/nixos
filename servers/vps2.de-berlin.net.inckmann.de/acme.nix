@@ -1,6 +1,6 @@
 { config, lib, ... }:
 {
-  sops.secrets.ionos.sopsFile = ../secrets/vps2-de-berlin/acme.yaml;
+  sops.secrets.ionos.sopsFile = ../../secrets/vps2-de-berlin/acme.yaml;
   security.acme = {
     acceptTerms = true;
     defaults = {
@@ -19,7 +19,7 @@
           "db.newsticker.gsm"
           "vpn"
         ]
-      ) (n: { }))
+      ) (n: { }));
   };
 
 }
