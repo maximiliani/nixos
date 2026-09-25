@@ -23,9 +23,12 @@ in
     hostName = "kanidm";
   };
 
+  users.users.kanidm.uid=999;
+
   sops.secrets = {
     admin_password = {
       owner = "kanidm";
+      group = "kanidm";
       sopsFile = ../../secrets/vps2-de-berlin/kanidm.yaml;
     };
     idm_admin_password = {
@@ -38,14 +41,10 @@ in
     };
   };
 
-  users.users.kanidm = {
-    uid = 999;
-  };
-
-  # environment.systemPackages = [ config.services.kanidm.package ];
+  environment.systemPackages = [ config.services.kanidm.package ];
 
   services.kanidm = {
-    package = pkgs.kanidmWithSecretProvisioning_1_10;
+    package = pkgs.kanidmWithSecretProvisioning_1_11;
     server = {
       enable = true;
       settings = {

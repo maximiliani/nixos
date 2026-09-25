@@ -11,7 +11,7 @@
     hostName = "vps2-de-berlin";
     domain = "net.inckmann.de";
     enableIPv6 = true;
-    nameservers = [ "1.1.1.1" "1.0.0.1" "9.9.9.9" "149.112.112.112" "2606:4700:4700::1111" "2606:4700:4700::1001" "2620:fe::fe" "2620:fe::9"];
+    nameservers = config.myModules.internet-nameservers;
     # === Firewall Configuration ===
     firewall = {
       allowPing = true;
@@ -49,37 +49,6 @@
     "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFVpt4Z5d+gu06m3/n7NsjcREUNdM8aVo7zaCrzmZcIQifNczStjj4BGE09jr/CpjwPRMRZSosL69od30U/mX0M= cardno:15_418_505"
     "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDNiTQBygCYSnoDlz9yY22pW83soTtNdSsiln4AGSCyMyH4CW2gGcXjBgAuIbce0JEipCB6tat4XfnKstAWMrtVbAK5szObzsGgnY4Debw1AF0ypGvWUNgkWT52jp+LeKCNA+CjjczrW0GIiL6lKC4ZZVxxxHC0/Tq2fzhLx+A/bbTmohorTCGJP1NTKHGqP87KgN8z2RM0MQU3Q4yCkVwRoYcfYxcD8UsnXS9JP3yEJJ6RsWTSHARgMpHhFnIgInZv7cjsZnyc7E6L5v0/nzoVT6uCeCeRbreNmIg2J2gol+UIOvh59J1n5USOmghNE2GtFiHDSxDqKJs9EGbFtwDZJnLsAe0Erg9rrraG7NgxPB2oHbeHsIBo4Rf1MGfrrxz2vXhd31cPfl0S/q2hgjC7y2swZFWQ4kxL0A4Hu2NVRGKp+eyBRjRSNS4QLoLm0njLpF3mw50VNlq3Pc5Ar3n6ucSrqKuFC5imRrJQNOw6a4CXwmAgk9bjuOn6qxZgpDs= VPS Max Raoul"
   ];
-
-  # === Sops ===
-  sops.secrets = {
-    headscale_oidc_client_secret = {
-      sopsFile = self + /secrets/vps2-de-berlin/headscale.yaml;
-      owner = "headscale";
-    };
-    admin_password = {
-      sopsFile = self + /secrets/vps2-de-berlin/kanidm.yaml;
-      owner = "kanidm";
-    };
-    idm_admin_password = {
-      sopsFile = self + /secrets/vps2-de-berlin/kanidm.yaml;
-      owner = "kanidm";
-    };
-    # wireguard_private_key = {
-    #   sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;
-    # };
-    # wireguard_gateway_preshared_key = {
-    #   sopsFile = self + /secrets/vps2-de-berlin/wireguard.yaml;
-    # };
-    # ipsec_server_key = {
-    #   sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
-    # };
-    # ipsec_server_cert = {
-    #   sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
-    # };
-    # ipsec_ca_cert = {
-    #   sopsFile = self + /secrets/vps2-de-berlin/ipsec.yaml;
-    # };
-  };
 
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
