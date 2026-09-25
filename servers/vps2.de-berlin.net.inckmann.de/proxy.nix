@@ -63,7 +63,7 @@ in
       };
 
       "headscale.inckmann.de" = {
-        address = "http://192.168.1.14:8081";
+        address = "http://${ips.headscale.ipv4.address}:8081";
         proxyWebsockets = true;
       };
     };
