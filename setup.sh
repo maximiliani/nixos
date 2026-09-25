@@ -3,7 +3,7 @@
 set -e
 
 hostname=""
-remote="vps"
+remote="vps2-de-berlin"
 remote_sock="/run/headscale/headscale.sock"
 local_sock="/tmp/headscale-tunnel.sock"
 sops_file="secrets/tailscale.yaml"
