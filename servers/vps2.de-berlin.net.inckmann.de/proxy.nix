@@ -6,6 +6,11 @@
 let
   ips = config.myModules.ips;
 
+  users.users.nginx = {
+    uid = 995;
+    extraGroups = ["acme" "nginx"];
+  };
+
   proxyHost =
     name:
     {

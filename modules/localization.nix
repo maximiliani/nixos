@@ -8,7 +8,7 @@
   ];
 
   i18n.extraLocaleSettings = {
-    LANGUAGE = lib.mkDefault "de_DE";
+    LANGUAGE = lib.mkDefault "en_US";
     LC_ADDRESS = "de_DE.UTF-8";
     LC_IDENTIFICATION = "de_DE.UTF-8";
     LC_MEASUREMENT = "de_DE.UTF-8";

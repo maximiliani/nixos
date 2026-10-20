@@ -23,7 +23,10 @@ in
     hostName = "kanidm";
   };
 
-  users.users.kanidm.uid=999;
+  users.users.kanidm = {
+    uid = 995;
+    extraGroups = ["acme" "nginx" "kanidm"];
+  };
 
   sops.secrets = {
     admin_password = {

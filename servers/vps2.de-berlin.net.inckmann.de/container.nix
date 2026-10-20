@@ -21,7 +21,21 @@ let
           mountPoint = "/var/lib/sops-nix/key.txt";
           hostPath = config.sops.age.keyFile;
         };
+        "/etc/passwd" = { };
+        "/etc/group" = { };
       };
+
+      # users.mutableUsers = true;
+      # users.users = lib.mkForce {
+      #   passwd = {
+      #     path = "/etc/passwd";
+      #     mountPoint = "/etc/passwd";
+      #   };
+      #   group = {
+      #     path = "/etc/group";
+      #     mountPoint = "/etc/group";
+      #   };
+      # };
     } options;
 in
 {
@@ -59,6 +73,8 @@ in
       config = (import ./proxy.nix);
       bindMounts = lib.mkForce {
         "/var/lib/acme" = { };
+        # "/etc/passwd" = { };
+        # "/etc/group" = { };
       };
       hostAddress = "10.0.0.1";
       localAddress = config.myModules.ips.ssl-proxy.ipv4.address;
@@ -68,6 +84,8 @@ in
     kanidm = mkContainer {
       config = (import ./kanidm.nix);
       bindMounts."/var/lib/acme/auth.inckmann.de" = { };
+      # bindMounts."/etc/passwd" = { };
+      # bindMounts."/etc/group" = { };
       hostAddress = "10.0.0.3";
       localAddress = config.myModules.ips.kanidm.ipv4.address;
       hostAddress6 = "fc00::3";
@@ -76,6 +94,8 @@ in
     headscale = mkContainer {
       config = (import ./headscale.nix);
       bindMounts."/var/lib/acme/headscale.inckmann.de" = { };
+      # bindMounts."/etc/passwd" = { };
+      # bindMounts."/etc/group" = { };
       hostAddress = "10.0.0.5";
       localAddress = config.myModules.ips.headscale.ipv4.address;
       hostAddress6 = "fc00::5";
@@ -88,6 +108,8 @@ in
         isReadOnly = false;
         hostPath = "/var/lib/tailscale-exit-node";
       };
+      # bindMounts."/etc/passwd" = { };
+      # bindMounts."/etc/group" = { };
       hostAddress = "10.0.0.7";
       localAddress = config.myModules.ips.headscale.ipv4.address;
       hostAddress6 = "fc00::7";
