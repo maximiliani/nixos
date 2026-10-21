@@ -11,6 +11,7 @@ in
     exit-node = true;
     routes = [
       "10.0.0.0/8"
+      "fc00::/64"
     ];
   };
 

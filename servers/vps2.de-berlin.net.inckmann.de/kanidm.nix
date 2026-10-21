@@ -81,6 +81,7 @@ in
         headscale = { };
         family = { };
         friends = { };
+        admins = { };
       };
 
       systems.oauth2 = {
@@ -106,6 +107,7 @@ in
           groups = [
             "headscale"
             "friends"
+            "admins"
           ];
         };
 
@@ -117,6 +119,7 @@ in
             "family"
             "friends"
             "headscale"
+            "admins"
           ];
         };
       };
