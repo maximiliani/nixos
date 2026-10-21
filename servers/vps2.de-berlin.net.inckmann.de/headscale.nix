@@ -19,13 +19,16 @@
 
   services.headscale = {
     enable = true;
-    port = 443;
-    address = "[::]";
+    # The nginx proxy terminates TLS for headscale.inckmann.de (its vhost forwards
+    # to http://10.0.0.6:8081), so headscale itself listens on plain HTTP here and
+    # must NOT run its own ACME (no tls_letsencrypt_hostname). Port must match the
+    # proxy's upstream target. server_url stays the public https:// URL.
+    address = "0.0.0.0";
+    port = 8081;
 
     settings = {
       server_url = "https://headscale.inckmann.de";
       policy.path = ./headscale_acl.hujson;
-      tls_letsencrypt_hostname = "headscale.inckmann.de";
 
       prefixes = {
         v4 = "10.1.0.0/16";

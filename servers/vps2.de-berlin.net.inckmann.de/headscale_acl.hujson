@@ -1,7 +1,7 @@
 {
   "groups": {
     "group:admin": [ "maximilian@auth.inckmann.de" ],
-    "group:user": [ "maximilian@auth.inckmann.de", raoul@auth.inckmann.de ]
+    "group:user": [ "maximilian@auth.inckmann.de", "raoul@auth.inckmann.de" ]
   },
   "tagOwners": {
     "tag:server": [ "group:admin" ],
@@ -12,7 +12,7 @@
     "routes": {
       "10.0.0.0/8": [ "tag:server" ],
       "fd00::/64": [ "tag:server" ],
-      "192.168.0.0/16" [ "tag:home" ],
+      "192.168.0.0/16": [ "tag:home" ],
     },
     "exitNode": [ "tag:server" ]
   },

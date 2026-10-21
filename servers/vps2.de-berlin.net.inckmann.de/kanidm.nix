@@ -23,9 +23,16 @@ in
     hostName = "kanidm";
   };
 
+  # Declarative user DB so kanidm's uid (=995, matching the host acme owner of the
+  # bind-mounted /var/lib/acme) and nginx/kanidm group membership actually apply.
+  # With the default users.mutableUsers = true NixOS leaves the already-created
+  # kanidm user (uid 999) untouched, so it can't read the certs -> TLS fails.
+  users.mutableUsers = false;
+  users.allowNoPasswordLogin = true;
+
   users.users.kanidm = {
     uid = 995;
-    extraGroups = ["acme" "nginx" "kanidm"];
+    extraGroups = [ "acme" "nginx" "kanidm" ];
   };
 
   sops.secrets = {

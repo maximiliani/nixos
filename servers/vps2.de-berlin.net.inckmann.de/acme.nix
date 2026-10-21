@@ -4,13 +4,17 @@ let
 in
 {
   sops.secrets.ionos.sopsFile = ../../secrets/vps2-de-berlin/acme.yaml;
-  # users.users.acme = {
-  #   uid = 995;
-  #   group = "acme";
-  #   isSystemUser = true;
-  #   # home = "/var/lib/acme";
-  # };
-  # users.groups.acme.gid = 995;
+  # The acme systemd units run as User=acme/Group=acme. Declaring them here (with a
+  # fixed uid/gid so the proxy/headscale/kanidm containers can share /var/lib/acme)
+  # guarantees the acme group exists on the host; the security.acme module alone does
+  # not always (re)create it on this box.
+  users.users.acme = {
+    uid = 995;
+    group = "acme";
+    isSystemUser = true;
+    home = "/var/lib/acme";
+  };
+  users.groups.acme.gid = 995;
   users.groups.nginx = { };
   security.acme = {
     acceptTerms = true;
@@ -20,36 +24,26 @@ in
       dnsProvider = "ionos";
       environmentFile = config.sops.secrets.ionos.path;
     };
-    certs = {
-      "${domainName}" = {
-        group = config.services.nginx.group;
-        extraDomainNames = (map (subdomain: (if subdomain == "" then "" else "${subdomain}.") + "${domainName}")
-          [
-            ""
-            "auth"
-            "headscale"
-            "newsticker.gsm"
-            "db.newsticker.gsm"
-            "vpn"
-          ]
-        );
-#         postRun = ''
-#           # set permission on dir
-#           ${pkgs.acl}/bin/setfacl -m \
-#           u:995:rx,u:nginx:rx,u:acme:rx \
-#           /var/lib/acme/${domainName}
-#
-#           # set permission on key file
-#           ${pkgs.acl}/bin/setfacl -m \
-#           u:995:rwx,u:nginx:r,u:acme:r \
-#           /var/lib/acme/${domainName}/*.pem
-#         '';
-        reloadServices = [
-          "nginx"
-          "headscale"
-          "kanidm"
-        ];
-      };
+    certs = lib.genAttrs (map (subdomain: (if subdomain == "" then "" else "${subdomain}.") + "${domainName}")
+      [
+        ""
+        "auth"
+        "headscale"
+        "newsticker.gsm"
+        "db.newsticker.gsm"
+        "vpn"
+      ]
+    ) (
+      n: { }
+    ) // {
+      # headscale + kanidm/proxy load their certs from per-domain directories that
+      # are bind-mounted into the containers (see container.nix), so each entry
+      # above must stay a separate ACME cert (not SANs of one cert).
+      "${domainName}".reloadServices = [
+        "nginx"
+        "headscale"
+        "kanidm"
+      ];
     };
   };
 
