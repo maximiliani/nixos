@@ -14,7 +14,7 @@
   # space. Also pre-create the per-domain ACME cert dirs that the headscale/kanidm
   # containers bind-mount, so systemd-nspawn can clone them before ACME runs.
   systemd.tmpfiles.rules = [
-    "L+ /etc/systemd/system/tailscaled-autoconnect.service - - - - /dev/null"
+    # "L+ /etc/systemd/system/tailscaled-autoconnect.service - - - - /dev/null"
     "d /var/lib/acme/auth.inckmann.de 0750 acme nginx -"
     "d /var/lib/acme/headscale.inckmann.de 0750 acme nginx -"
   ];
