@@ -8,6 +8,7 @@ in
   ];
   local.tailscale = {
     enable = true;
+    user = "vps2-de-berlin";
     exit-node = true;
     routes = [
       "10.0.0.0/8"

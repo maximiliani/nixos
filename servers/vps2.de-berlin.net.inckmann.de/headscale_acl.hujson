@@ -1,12 +1,13 @@
 {
   "groups": {
-    "group:admin": [ "maximilian@auth.inckmann.de" ],
+    "group:admin": [ "maximilian@auth.inckmann.de"],
+    "group:service": [ "vps2-de-berlin@auth.inckmann.de" ],
     "group:user": [ "maximilian@auth.inckmann.de", "raoul@auth.inckmann.de" ]
   },
   "tagOwners": {
-    "tag:server": [ "group:admin" ],
-    "tag:home": [ "group:admin" ],
-    "tag:extern": [ "group:admin" ],
+    "tag:server": [ "group:admin", "group:service"],
+    "tag:home": [ "group:admin", "group:service" ],
+    "tag:extern": [ "group:admin", "group:service"],
   },
   "autoApprovers": {
     "routes": {
@@ -24,7 +25,7 @@
     },
     {
         "action": "accept",
-        "src": [ "group:admin" ],
+        "src": [ "group:admin", "group:service"],
         "dst": [ "tag:server:*" ]
     },
     // Allow users to access their own devices using autogroup:self (see below for more details about performance impact)

@@ -109,6 +109,7 @@ in
   myModules.autoUpgrade.allowReboot = true;
   local.tailscale = {
     enable = true;
+    user = "vps2-de-berlin";
     server = true;
     accept-routes = false;
   };
