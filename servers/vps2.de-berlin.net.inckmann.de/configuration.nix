@@ -8,15 +8,20 @@
 
   # The auto-connect unit `tailscaled-autoconnect.service` was introduced by an
   # earlier revision of this config and removed since, but its generated unit
-  # file survives across generations in /etc/systemd/system. Mask it at runtime
-  # (tmpfs, survives this switch) — the stale file is in read-only store space.
-  # Also pre-create the per-domain ACME cert dirs that the headscale/kanidm
-  # containers bind-mount, so systemd-nspawn canclone them before ACME runs.
+  # file survives across generations in /etc/systemd/system. Mask it persistently
+  # here (in the highest-precedence /etc/systemd/system dir, so it survives
+  # reboots and is honored at switch time) — the stale file is in read-only store
+  # space. Also pre-create the per-domain ACME cert dirs that the headscale/kanidm
+  # containers bind-mount, so systemd-nspawn can clone them before ACME runs.
   systemd.tmpfiles.rules = [
-    "L+ /run/systemd/system/tailscaled-autoconnect.service - - - - /dev/null"
+    "L+ /etc/systemd/system/tailscaled-autoconnect.service - - - - /dev/null"
     "d /var/lib/acme/auth.inckmann.de 0750 acme nginx -"
     "d /var/lib/acme/headscale.inckmann.de 0750 acme nginx -"
   ];
+
+  # The tailscale-exit container uses enableTun = true, which needs the tun
+  # kernel module and a working /dev/net/tun on the host.
+  boot.kernelModules = [ "tun" ];
 
   # === Network Configuration ===
   networking = {
@@ -31,12 +36,8 @@
       allowedUDPPorts = [ 500 4500 51820 ];  # IPSec NAT-T/IKE + WireGuard
       # trustedInterfaces = [ "tailscale0" "wg-gateway" ];
     };
-    nat.forwardPorts = [
-      { sourcePort = 80;  destination = "${config.myModules.ips.ssl-proxy.ipv4.address}:80" ; }
-      { sourcePort = 80;  destination = "${config.myModules.ips.ssl-proxy.ipv6.address}:80" ; }
-      { sourcePort = 443;  destination = "${config.myModules.ips.ssl-proxy.ipv4.address}:443" ; }
-      { sourcePort = 443;  destination = "${config.myModules.ips.ssl-proxy.ipv6.address}:443" ; }
-    ];
+    # Port forwarding for the proxy/headscale/exit containers is declared in
+    # container.nix (with loopbackIPs for internal hosts reaching their own URL).
   };
 
   # === System Packages ===

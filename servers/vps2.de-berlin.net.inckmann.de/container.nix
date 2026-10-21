@@ -22,14 +22,6 @@ let
           hostPath = config.sops.age.keyFile;
         };
       };
-
-      # NOTE: do NOT bind-mount /etc/passwd and /etc/group here. NixOS containers
-      # already share the host user namespace, so numeric uids (e.g. acme=995,
-      # nginx=995) map 1:1 across the host/container boundary — that is what makes
-      # the bind-mounted /var/lib/acme accessible. Binding passwd/group makes every
-      # container's system users (headscale, kanidm, nginx, ...) disappear because
-      # they get written to the host's file instead of being created per-container,
-      # which manifests as systemd "status=217/USER" failures.
     } options;
 in
 {
@@ -40,6 +32,16 @@ in
     externalInterface = "ens6";
     # Lazy IPv6 connectivity for the container
     enableIPv6 = true;
+    # loopbackIPs: allow hosts behind this NAT (i.e. the headscale / tailscale-exit
+    # containers) to reach their own public domain (https://headscale.inckmann.de)
+    # via the proxy container. Without this we get connection refused on the host's
+    # own 443 for container-originated traffic, and the exit node cannot register.
+    forwardPorts = [
+      { sourcePort = 80;  destination = "${config.myModules.ips.ssl-proxy.ipv4.address}:80" ; loopbackIPs = [ config.myModules.ips.vps2-de-berlin.ipv4.address ]; }
+      { sourcePort = 80;  destination = "[${config.myModules.ips.ssl-proxy.ipv6.address}]:80" ; loopbackIPs = [ config.myModules.ips.vps2-de-berlin.ipv6.address ]; }
+      { sourcePort = 443; destination = "${config.myModules.ips.ssl-proxy.ipv4.address}:443"; loopbackIPs = [ config.myModules.ips.vps2-de-berlin.ipv4.address ]; }
+      { sourcePort = 443; destination = "[${config.myModules.ips.ssl-proxy.ipv6.address}]:443"; loopbackIPs = [ config.myModules.ips.vps2-de-berlin.ipv6.address ]; }
+    ];
   };
 
   services.avahi.enable = true;

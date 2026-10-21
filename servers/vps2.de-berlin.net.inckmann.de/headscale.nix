@@ -10,6 +10,7 @@
 
   networking = {
     hostName = "headscale";
+    hosts."${config.myModules.ips.ssl-proxy.ipv4.address}" = [ "auth.inckmann.de" ];
   };
 
   sops.secrets.headscale_oidc_client_secret = {
@@ -44,7 +45,7 @@
       };
 
       oidc = rec {
-        client_id = "headscale";
+        client_id = "headscale_service";
         issuer = "https://auth.inckmann.de/oauth2/openid/${client_id}";
         client_secret_path = config.sops.secrets.headscale_oidc_client_secret.path;
         # scope = [ "openid" "profile" "email" "groups" ];
@@ -53,4 +54,7 @@
       };
     };
   };
+
+  # Allow the nginx proxy (10.0.0.2) to reach this container's headscale port.
+  networking.firewall.allowedTCPPorts = [ 8081 ];
 }

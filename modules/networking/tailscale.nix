@@ -108,7 +108,11 @@ in
       enable = cfg.enable;
       authKeyFile = config.sops.secrets."${cfg.user}-auth-key".path;
       openFirewall = true;
+      # --reset: re-apply the declared flags on every start instead of erroring
+      # out with "changing settings via 'tailscale up' requires mentioning all
+      # non-default flags" when the persisted tailscaled state differs.
       extraUpFlags = [
+        "--reset"
         "--login-server=https://headscale.inckmann.de"
       ]
       ++ optional (cfg.tags != [ ]) "--advertise-tags=${formatLists "tag:" cfg.tags}";
